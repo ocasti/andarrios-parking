@@ -1,15 +1,16 @@
 'use client';
 import { useState } from 'react';
 import AppShell from '@/components/AppShell';
+import RequireAdmin from '@/components/RequireAdmin';
 import AptoSelector from '@/components/AptoSelector';
-import { useLive } from '@/lib/useLive';
-import { db } from '@/lib/db';
+import Pagination from '@/components/Pagination';
+import { usePagedQuery } from '@/lib/usePagedQuery';
 import { bloquearApto, desbloquearApto, aprobarPlaca, revocarPlaca, fmtD } from '@/lib/actions';
 
-export default function ControlPage() {
-  const bloqueados = useLive(() => db().bloqueados.filter((b) => !b.desbloqueado_at).toArray()) ?? [];
-  const placas = useLive(() => db().placas_aprobadas.filter((p) => !p.deleted_at).toArray()) ?? [];
+interface Bloqueado { id: string; cod: string; motivo: string; fecha_bloqueo: string }
+interface PlacaAp { id: string; cod: string; placa: string; tipo: 'carro' | 'moto'; fecha_aprobacion: string }
 
+export default function ControlPage() {
   const [bTorre, setBTorre] = useState('');
   const [bApto, setBApto] = useState('');
   const [bMotivo, setBMotivo] = useState('');
@@ -19,14 +20,23 @@ export default function ControlPage() {
   const [pTipo, setPTipo] = useState<'carro' | 'moto'>('carro');
   const [filtPlacas, setFiltPlacas] = useState('');
 
-  const placasFiltradas = filtPlacas
-    ? placas.filter((p) => p.placa.toLowerCase().includes(filtPlacas.toLowerCase()) || p.cod.toLowerCase().includes(filtPlacas.toLowerCase()))
-    : placas;
-  const grupos: Record<string, typeof placasFiltradas> = {};
-  placasFiltradas.forEach((p) => { (grupos[p.cod] ||= []).push(p); });
+  const blqQ = usePagedQuery<Bloqueado>({
+    table: 'bloqueados',
+    isNull: ['desbloqueado_at'],
+    order: { column: 'fecha_bloqueo', ascending: false },
+    pageSize: 10,
+  });
+
+  const placasQ = usePagedQuery<PlacaAp>({
+    table: 'placas_aprobadas',
+    isNull: ['deleted_at'],
+    search: filtPlacas ? { columns: ['cod', 'placa'], value: filtPlacas } : undefined,
+    order: { column: 'fecha_aprobacion', ascending: false },
+    pageSize: 15,
+  }, [filtPlacas]);
 
   return (
-    <AppShell>
+    <AppShell><RequireAdmin>
       <div className="ph">
         <h2>Control de acceso</h2>
         <p>Bloquea aptos en mora · Gestiona placas aprobadas</p>
@@ -44,20 +54,21 @@ export default function ControlPage() {
               <input type="text" value={bMotivo} onChange={(e) => setBMotivo(e.target.value)} placeholder="Mora mes de…" />
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn bdx" disabled={!bApto} onClick={async () => { await bloquearApto(bApto, bMotivo); setBApto(''); setBMotivo(''); }}>🔒 Bloquear</button>
-              <button className="btn bs" disabled={!bApto} onClick={async () => { await desbloquearApto(bApto); setBApto(''); setBMotivo(''); }}>🔓 Desbloquear</button>
+              <button className="btn bdx" disabled={!bApto} onClick={async () => { await bloquearApto(bApto, bMotivo); setBApto(''); setBMotivo(''); blqQ.refresh(); }}>🔒 Bloquear</button>
+              <button className="btn bs" disabled={!bApto} onClick={async () => { await desbloquearApto(bApto); setBApto(''); setBMotivo(''); blqQ.refresh(); }}>🔓 Desbloquear</button>
             </div>
           </div>
           <div className="card">
-            <div className="ch"><div className="ctit">🛡️ Aptos bloqueados ({bloqueados.length})</div></div>
-            {bloqueados.length === 0 ? (<p className="empty">No hay aptos bloqueados.</p>) : (
-              <div>{bloqueados.map((b) => (
+            <div className="ch"><div className="ctit">🛡️ Aptos bloqueados ({blqQ.total})</div></div>
+            {blqQ.rows.length === 0 ? (<p className="empty">No hay aptos bloqueados.</p>) : (
+              <div>{blqQ.rows.map((b) => (
                 <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 13px', border: '1px solid #f0c4c4', borderRadius: 10, marginBottom: 7, background: 'var(--red2)' }}>
                   <div><h4 style={{ fontSize: 13, fontWeight: 600 }}>🔒 {b.cod}</h4><p style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 1 }}>{b.motivo} · {fmtD(b.fecha_bloqueo)}</p></div>
-                  <button className="btn bs xs" onClick={() => void desbloquearApto(b.cod)}>🔓 Desbloquear</button>
+                  <button className="btn bs xs" onClick={async () => { await desbloquearApto(b.cod); blqQ.refresh(); }}>🔓 Desbloquear</button>
                 </div>
               ))}</div>
             )}
+            <Pagination page={blqQ.page} totalPages={blqQ.totalPages} total={blqQ.total} pageSize={blqQ.pageSize} loading={blqQ.loading} onChange={blqQ.setPage} />
           </div>
         </div>
         <div>
@@ -68,27 +79,33 @@ export default function ControlPage() {
               <div className="fld"><label>Placa</label><input type="text" value={pPlaca} onChange={(e) => setPPlaca(e.target.value.toUpperCase())} placeholder="ABC-123" maxLength={7} /></div>
               <div className="fld"><label>Tipo</label><select value={pTipo} onChange={(e) => setPTipo(e.target.value as any)}><option value="carro">🚗 Carro</option><option value="moto">🏍️ Moto</option></select></div>
             </div>
-            <button className="btn bp" disabled={!pApto || !pPlaca.trim()} onClick={async () => { await aprobarPlaca(pApto, pPlaca.trim(), pTipo); setPPlaca(''); }}>➕ Aprobar placa</button>
+            <button className="btn bp" disabled={!pApto || !pPlaca.trim()} onClick={async () => { await aprobarPlaca(pApto, pPlaca.trim(), pTipo); setPPlaca(''); placasQ.refresh(); }}>➕ Aprobar placa</button>
           </div>
           <div className="card">
-            <div className="ctit" style={{ marginBottom: '.9rem' }}>📋 Placas aprobadas ({placas.length})</div>
-            <div className="sw"><input type="text" placeholder="Buscar apto o placa…" value={filtPlacas} onChange={(e) => setFiltPlacas(e.target.value)} /></div>
-            {Object.keys(grupos).length === 0 ? (<p className="empty">No hay placas aprobadas.</p>) : (
-              Object.keys(grupos).sort().map((cod) => (
-                <div key={cod} style={{ padding: '10px 13px', border: '1px solid var(--bd)', borderRadius: 10, marginBottom: 7, background: 'var(--bg3)' }}>
-                  <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{cod}</h4>
-                  <div>{grupos[cod].map((p) => (
-                    <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--leaf5)', color: 'var(--leaf)', border: '1px solid var(--leaf4)', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, margin: 3 }}>
-                      {p.tipo === 'carro' ? '🚗' : '🏍️'} {p.placa}
-                      <button onClick={() => void revocarPlaca(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink3)', fontSize: 12, padding: '0 0 0 3px' }}>×</button>
-                    </span>
-                  ))}</div>
-                </div>
-              ))
+            <div className="ctit" style={{ marginBottom: '.9rem' }}>📋 Placas aprobadas ({placasQ.total})</div>
+            <div className="sw"><input type="text" placeholder="Buscar apto o placa…" value={filtPlacas} onChange={(e) => setFiltPlacas(e.target.value.toUpperCase())} /></div>
+            {placasQ.rows.length === 0 ? (<p className="empty">{placasQ.loading ? 'Cargando…' : 'No hay placas aprobadas.'}</p>) : (
+              <div className="tw">
+                <table>
+                  <thead><tr><th>Apto</th><th>Placa</th><th>Tipo</th><th>Aprobada</th><th></th></tr></thead>
+                  <tbody>
+                    {placasQ.rows.map((p) => (
+                      <tr key={p.id}>
+                        <td><b>{p.cod}</b></td>
+                        <td><b>{p.placa}</b></td>
+                        <td>{p.tipo === 'carro' ? '🚗' : '🏍️'} {p.tipo}</td>
+                        <td style={{ color: 'var(--ink3)', fontSize: 11 }}>{fmtD(p.fecha_aprobacion)}</td>
+                        <td><button className="btn bdx xs" onClick={async () => { await revocarPlaca(p.id); placasQ.refresh(); }}>Revocar</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
+            <Pagination page={placasQ.page} totalPages={placasQ.totalPages} total={placasQ.total} pageSize={placasQ.pageSize} loading={placasQ.loading} onChange={placasQ.setPage} />
           </div>
         </div>
       </div>
-    </AppShell>
+    </RequireAdmin></AppShell>
   );
 }

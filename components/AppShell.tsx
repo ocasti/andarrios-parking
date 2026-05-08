@@ -3,80 +3,169 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { initSync, subscribeStatus } from '@/lib/sync';
+import { useAuth, logout } from '@/lib/useAuth';
 
-interface NavItem { href: string; label: string; icon: string; section?: string }
+interface NavItem { href: string; label: string; icon: string; admin?: boolean }
 const NAV: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: '📊', section: 'Principal' },
+  { href: '/', label: 'Dashboard', icon: '📊' },
   { href: '/visitantes', label: 'Visitantes', icon: '🚗' },
-  { href: '/residentes', label: 'Residentes', icon: '👥' },
-  { href: '/mensualidades', label: 'Mensualidades', icon: '📅', section: 'Gestión' },
-  { href: '/control', label: 'Control acceso', icon: '🔒' },
-  { href: '/caja', label: 'Cierre de caja', icon: '💰' },
-  { href: '/tarifas', label: 'Tarifas', icon: '🪙', section: 'Configuración' },
-  { href: '/reportes', label: 'Reportes', icon: '📑' },
-  { href: '/admin', label: 'Panel admin', icon: '🛠️', section: 'Admin' },
+  { href: '/caja', label: 'Caja', icon: '💰' },
+  // Admin only
+  { href: '/residentes', label: 'Residentes', icon: '👥', admin: true },
+  { href: '/mensualidades', label: 'Mensualidades', icon: '📅', admin: true },
+  { href: '/control', label: 'Control acceso', icon: '🔒', admin: true },
+  { href: '/tarifas', label: 'Tarifas', icon: '🪙', admin: true },
+  { href: '/reportes', label: 'Reportes', icon: '📑', admin: true },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const { isAdmin, user } = useAuth();
   const [status, setStatus] = useState<'online' | 'offline' | 'syncing'>('online');
   const [pending, setPending] = useState(0);
-  const [clock, setClock] = useState('');
+  const [open, setOpen] = useState(false);
 
   useEffect(() => { void initSync(); }, []);
   useEffect(() => {
     const unsub = subscribeStatus((s, p) => { setStatus(s); setPending(p); });
     return () => { unsub(); };
   }, []);
-  useEffect(() => {
-    const tick = () => {
-      const n = new Date();
-      setClock(n.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + n.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    };
-    tick();
-    const i = setInterval(tick, 1000);
-    return () => clearInterval(i);
-  }, []);
+  useEffect(() => { setOpen(false); }, [path]);
 
-  const lastSection = { value: '' };
+  const visible = NAV.filter((n) => !n.admin || isAdmin);
 
   return (
     <>
       <header className="hdr">
-        <div className="logo">
-          <div style={{ width: 42, height: 42, background: '#2d7a5c', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="26" height="26" viewBox="0 0 64 64">
-              <ellipse cx="30" cy="36" rx="16" ry="9" fill="#fff" opacity="0.92"/>
-              <ellipse cx="30" cy="34" rx="15" ry="7" fill="#c8d8b0" opacity="0.85"/>
-              <circle cx="44" cy="29" r="6.5" fill="#fff" opacity="0.92"/>
-              <path d="M50 29 L60 27.5 L50 30.5Z" fill="#c8922a"/>
-            </svg>
-          </div>
-          <div>
-            <div className="logo-name">Andarríos</div>
-            <div className="logo-sub">Sistema de parqueadero</div>
-          </div>
+        <div className="hdr-left">
+          <button
+            className="menu-btn"
+            aria-label="Menú"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? '✕' : '☰'}
+          </button>
+          <Link href="/" className="logo">
+            <div className="logo-ic">
+              <svg width="24" height="24" viewBox="0 0 64 64">
+                <ellipse cx="30" cy="36" rx="16" ry="9" fill="#fff" opacity="0.92"/>
+                <ellipse cx="30" cy="34" rx="15" ry="7" fill="#c8d8b0" opacity="0.85"/>
+                <circle cx="44" cy="29" r="6.5" fill="#fff" opacity="0.92"/>
+                <path d="M50 29 L60 27.5 L50 30.5Z" fill="#c8922a"/>
+              </svg>
+            </div>
+            <div className="logo-text">
+              <div className="logo-name">Andarríos</div>
+              <div className="logo-sub">Parqueadero</div>
+            </div>
+          </Link>
+
+          <nav className={`topnav ${open ? 'open' : ''}`}>
+            {visible.map((n) => (
+              <Link
+                key={n.href}
+                href={n.href}
+                className={`tn ${path === n.href ? 'on' : ''}`}
+              >
+                <span className="tn-ic">{n.icon}</span>
+                <span>{n.label}</span>
+              </Link>
+            ))}
+            {isAdmin && (
+              <button
+                className="tn tn-logout"
+                onClick={() => { void logout(); }}
+                title={user?.email ?? ''}
+              >
+                <span className="tn-ic">🔓</span>
+                <span>Salir</span>
+              </button>
+            )}
+          </nav>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+
+        <div className="hdr-right">
           <span className={`status-bar ${status}`}>
             <span className="dot" />
-            {status === 'online' && (pending > 0 ? `Sincronizando (${pending})` : 'En línea · sincronizado')}
-            {status === 'offline' && (pending > 0 ? `Sin red — ${pending} pendientes` : 'Sin red')}
-            {status === 'syncing' && `Sincronizando…${pending ? ` (${pending})` : ''}`}
+            <span className="hide-mobile">
+              {status === 'online' && (pending > 0 ? `Sincronizando (${pending})` : 'En línea')}
+              {status === 'offline' && (pending > 0 ? `Sin red — ${pending}` : 'Sin red')}
+              {status === 'syncing' && `Sincronizando…${pending ? ` (${pending})` : ''}`}
+            </span>
           </span>
-          <span style={{ fontSize: 12, color: 'var(--leaf4)' }}>{clock}</span>
         </div>
       </header>
-      <div className="layout">
-        <nav className="sb">
-          {NAV.map((n) => {
-            const showSection = n.section && n.section !== lastSection.value;
-            if (showSection) lastSection.value = n.section!;
-            return (<div key={n.href}>{showSection && <div className="ns">{n.section}</div>}<Link href={n.href} className={`nb ${path === n.href ? 'on' : ''}`}><span style={{ fontSize: 16 }}>{n.icon}</span> {n.label}</Link></div>);
-          })}
-        </nav>
-        <main className="ct">{children}</main>
-      </div>
+
+      {open && <div className="overlay-mobile" onClick={() => setOpen(false)} />}
+
+      <main className="ct">{children}</main>
+
+      <style jsx global>{`
+        .hdr {
+          background: var(--leaf); color: #fff;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 1rem; height: 60px;
+          position: sticky; top: 0; z-index: 100;
+          box-shadow: 0 2px 16px rgba(0,0,0,.25);
+        }
+        .hdr-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+        .hdr-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .menu-btn {
+          display: none; background: transparent; border: none;
+          color: #fff; font-size: 22px; cursor: pointer; padding: 4px 8px;
+          line-height: 1;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; flex-shrink: 0; }
+        .logo-ic {
+          width: 38px; height: 38px; background: var(--leaf2);
+          border-radius: 10px; display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .logo-name { font-family: 'Playfair Display', serif; font-size: 18px; letter-spacing: .5px; line-height: 1.1; }
+        .logo-sub { font-size: 9px; color: var(--leaf4); letter-spacing: 2px; text-transform: uppercase; font-weight: 300; }
+
+        .topnav { display: flex; align-items: center; gap: 4px; margin-left: 8px; flex-wrap: wrap; }
+        .tn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 6px 12px; border-radius: 8px;
+          color: rgba(255,255,255,.7); text-decoration: none;
+          font-size: 13px; font-weight: 500;
+          border: none; background: transparent; cursor: pointer;
+          transition: all .15s; white-space: nowrap;
+        }
+        .tn:hover { color: #fff; background: rgba(255,255,255,.08); }
+        .tn.on { color: #fff; background: rgba(255,255,255,.13); }
+        .tn-ic { font-size: 14px; }
+        .tn-logout { margin-left: 4px; opacity: .8; }
+
+        .ct { padding: 1.6rem; max-width: 1400px; margin: 0 auto; }
+        .overlay-mobile { display: none; }
+
+        @media (max-width: 980px) {
+          .topnav { display: none; }
+          .menu-btn { display: inline-flex; align-items: center; justify-content: center; }
+          .topnav.open {
+            display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+            position: fixed; left: 0; right: 0; top: 60px;
+            background: var(--leaf); padding: 1rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,.3);
+            z-index: 95; max-height: calc(100vh - 60px); overflow-y: auto;
+            margin: 0;
+          }
+          .topnav.open .tn { padding: 12px 14px; font-size: 14px; }
+          .overlay-mobile {
+            display: block; position: fixed; inset: 60px 0 0 0;
+            background: rgba(0,0,0,.4); backdrop-filter: blur(2px);
+            z-index: 90;
+          }
+          .logo-text { display: none; }
+          .ct { padding: 1rem; }
+        }
+        @media (max-width: 600px) {
+          .hide-mobile { display: none !important; }
+          .status-bar { padding: 4px 8px; }
+        }
+      `}</style>
     </>
   );
 }

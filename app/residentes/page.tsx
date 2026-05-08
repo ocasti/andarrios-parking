@@ -1,14 +1,20 @@
 'use client';
 import { useState } from 'react';
 import AppShell from '@/components/AppShell';
+import RequireAdmin from '@/components/RequireAdmin';
 import AptoSelector from '@/components/AptoSelector';
-import { useLive } from '@/lib/useLive';
-import { db } from '@/lib/db';
+import Pagination from '@/components/Pagination';
+import { usePagedQuery } from '@/lib/usePagedQuery';
 import { crearResidente, eliminarResidente, fmtD } from '@/lib/actions';
+import { getSupabase } from '@/lib/supabase';
+
+interface ResidenteRow {
+  id: string; cod: string; torre: number; piso: number; placa: string;
+  tipo: 'carro' | 'moto'; nombre: string; cel: string | null;
+  fecha_registro: string; created_at: string;
+}
 
 export default function ResidentesPage() {
-  const residentes = useLive(() => db().residentes.filter((r) => !r.deleted_at).toArray()) ?? [];
-  const placas_aprobadas = useLive(() => db().placas_aprobadas.filter((p) => !p.deleted_at).toArray()) ?? [];
   const [torre, setTorre] = useState('');
   const [apto, setApto] = useState('');
   const [tipo, setTipo] = useState<'carro' | 'moto'>('carro');
@@ -19,24 +25,38 @@ export default function ResidentesPage() {
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
 
+  const q = usePagedQuery<ResidenteRow>({
+    table: 'residentes',
+    isNull: ['deleted_at'],
+    search: filt ? { columns: ['placa', 'nombre', 'cod'], value: filt } : undefined,
+    order: { column: 'fecha_registro', ascending: false },
+    pageSize: 25,
+  }, [filt]);
+
   async function submit() {
     setError(''); setOk('');
     if (!torre || !apto) return setError('Selecciona torre y apartamento.');
     if (!placa.trim() || !nombre.trim()) return setError('Completa placa y propietario.');
     const placaUp = placa.toUpperCase().trim();
-    if (residentes.find((r) => r.placa === placaUp)) return setError(`La placa ${placaUp} ya está registrada.`);
-    const ap = placas_aprobadas.filter((p) => p.cod === apto);
-    if (ap.length > 0 && !ap.find((p) => p.placa === placaUp)) return setError(`La placa ${placaUp} no está aprobada para ${apto}.`);
+
+    // Validación contra Supabase: placa única + placa aprobada si aplica
+    const sb = getSupabase();
+    const { data: dup } = await sb.from('residentes').select('id').eq('placa', placaUp).is('deleted_at', null).maybeSingle();
+    if (dup) return setError(`La placa ${placaUp} ya está registrada.`);
+    const { data: ap } = await sb.from('placas_aprobadas').select('placa').eq('cod', apto).is('deleted_at', null);
+    if (ap && ap.length > 0 && !ap.find((p: any) => p.placa === placaUp)) return setError(`La placa ${placaUp} no está aprobada para ${apto}.`);
+
     const piso = parseInt(apto.charAt(4), 10);
     const aptoNum = parseInt(apto.slice(5), 10);
     await crearResidente({ cod: apto, torre: parseInt(torre, 10), piso, apto: aptoNum, placa: placaUp, tipo, nombre: nombre.trim(), cel: cel.trim() });
     setTorre(''); setApto(''); setPlaca(''); setNombre(''); setCel('');
     setOk(`Vehículo ${placaUp} registrado.`);
     setTimeout(() => setOk(''), 3500);
+    q.refresh();
   }
-  const filtrados = filt ? residentes.filter((r) => r.placa.toLowerCase().includes(filt.toLowerCase()) || r.nombre.toLowerCase().includes(filt.toLowerCase()) || r.cod.toLowerCase().includes(filt.toLowerCase())) : residentes;
+
   return (
-    <AppShell>
+    <AppShell><RequireAdmin>
       <div className="ph"><h2>Residentes</h2><p>12 torres · 6 pisos · 4 apartamentos por piso</p></div>
       <div className="card">
         <div className="ctit" style={{ marginBottom: '1rem' }}>➕ Registrar vehículo</div>
@@ -52,22 +72,26 @@ export default function ResidentesPage() {
         <button className="btn bp" onClick={submit}>➕ Registrar vehículo</button>
       </div>
       <div className="card">
-        <div className="ch"><div className="ctit">📋 Vehículos registrados ({residentes.length})</div></div>
-        <div className="sw"><input type="text" placeholder="Buscar placa, nombre, torre, apartamento…" value={filt} onChange={(e) => setFilt(e.target.value)} /></div>
+        <div className="ch"><div className="ctit">📋 Vehículos registrados ({q.total})</div></div>
+        <div className="sw"><input type="text" placeholder="Buscar placa, nombre o código…" value={filt} onChange={(e) => setFilt(e.target.value)} /></div>
         <div className="tw">
-          {filtrados.length === 0 ? (<p className="empty">No hay vehículos que coincidan.</p>) : (
-            <table><thead><tr><th>Código</th><th>Torre</th><th>Piso</th><th>Placa</th><th>Tipo</th><th>Propietario</th><th>Celular</th><th>Registro</th><th></th></tr></thead><tbody>
-              {filtrados.map((r) => (<tr key={r.id}>
-                <td><b>{r.cod}</b></td><td>T{String(r.torre).padStart(2, '0')}</td><td>{r.piso}</td><td><b>{r.placa}</b></td>
-                <td><span className={`bge b${r.tipo}`}>{r.tipo === 'carro' ? '🚗' : '🏍️'} {r.tipo}</span></td>
-                <td>{r.nombre}</td><td style={{ color: 'var(--ink3)' }}>{r.cel || '—'}</td>
-                <td style={{ color: 'var(--ink3)', fontSize: 11 }}>{fmtD(r.fecha_registro || r.created_at!)}</td>
-                <td><button className="btn bdx xs" onClick={() => { if (confirm(`¿Eliminar ${r.placa}?`)) void eliminarResidente(r.id); }}>🗑️</button></td>
-              </tr>))}
-            </tbody></table>
+          {q.rows.length === 0 ? (<p className="empty">{q.loading ? 'Cargando…' : 'No hay vehículos.'}</p>) : (
+            <table>
+              <thead><tr><th>Código</th><th>Torre</th><th>Piso</th><th>Placa</th><th>Tipo</th><th>Propietario</th><th>Celular</th><th>Registro</th><th></th></tr></thead>
+              <tbody>
+                {q.rows.map((r) => (<tr key={r.id}>
+                  <td><b>{r.cod}</b></td><td>T{String(r.torre).padStart(2, '0')}</td><td>{r.piso}</td><td><b>{r.placa}</b></td>
+                  <td><span className={`bge b${r.tipo}`}>{r.tipo === 'carro' ? '🚗' : '🏍️'} {r.tipo}</span></td>
+                  <td>{r.nombre}</td><td style={{ color: 'var(--ink3)' }}>{r.cel || '—'}</td>
+                  <td style={{ color: 'var(--ink3)', fontSize: 11 }}>{fmtD(r.fecha_registro || r.created_at)}</td>
+                  <td><button className="btn bdx xs" onClick={async () => { if (confirm(`¿Eliminar ${r.placa}?`)) { await eliminarResidente(r.id); q.refresh(); } }}>🗑️</button></td>
+                </tr>))}
+              </tbody>
+            </table>
           )}
         </div>
+        <Pagination page={q.page} totalPages={q.totalPages} total={q.total} pageSize={q.pageSize} loading={q.loading} onChange={q.setPage} />
       </div>
-    </AppShell>
+    </RequireAdmin></AppShell>
   );
 }

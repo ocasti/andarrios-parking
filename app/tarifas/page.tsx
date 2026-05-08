@@ -1,17 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import AppShell from '@/components/AppShell';
+import RequireAdmin from '@/components/RequireAdmin';
 import { useLive } from '@/lib/useLive';
 import { db } from '@/lib/db';
 import { guardarTarifas } from '@/lib/actions';
 
-const ACCESS_KEY = '123456';
-
 export default function TarifasPage() {
   const tarifas = useLive(() => db().tarifas.get(1));
-  const [autorizado, setAutorizado] = useState(false);
-  const [clave, setClave] = useState('');
-  const [errClave, setErrClave] = useState('');
   const [carro, setCarro] = useState(20000);
   const [moto, setMoto] = useState(10000);
   const [vis, setVis] = useState(1000);
@@ -29,27 +25,8 @@ export default function TarifasPage() {
     setTimeout(() => setOk(false), 3000);
   }
 
-  if (!autorizado) {
-    function verificar() {
-      if (clave === ACCESS_KEY) { setAutorizado(true); setErrClave(''); }
-      else setErrClave('Clave incorrecta.');
-    }
-    return (
-      <AppShell>
-        <div className="ph"><h2>Tarifas</h2><p>Acceso restringido</p></div>
-        <div className="card" style={{ maxWidth: 420 }}>
-          <div className="mh">🔒 Acceso restringido</div>
-          <p style={{ fontSize: 13, color: 'var(--ink3)', marginBottom: '1rem' }}>Ingresa la clave para acceder al módulo de tarifas.</p>
-          <div className="fld" style={{ marginBottom: 10 }}><label>Clave</label><input type="password" value={clave} onChange={(e) => setClave(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') verificar(); }} placeholder="••••••" /></div>
-          {errClave && <div className="al ae">⚠️ {errClave}</div>}
-          <button className="btn bp" onClick={verificar}>🔓 Entrar</button>
-        </div>
-      </AppShell>
-    );
-  }
-
   return (
-    <AppShell>
+    <AppShell><RequireAdmin>
       <div className="ph"><h2>Tarifas</h2><p>Configura los valores de cobro</p></div>
       <div className="card">
         <div className="ch"><div className="ctit">🪙 Tarifas vigentes</div><button className="btn bp sm" onClick={guardar}>💾 Guardar cambios</button></div>
@@ -60,7 +37,7 @@ export default function TarifasPage() {
         <Item label="IVA (%)" desc="Porcentaje de IVA" suffix="%" value={iva} onChange={setIva} />
         {ok && <div className="al aok" style={{ marginTop: '.8rem' }}>✅ Tarifas actualizadas y guardadas.</div>}
       </div>
-    </AppShell>
+    </RequireAdmin></AppShell>
   );
 }
 
