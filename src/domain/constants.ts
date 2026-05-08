@@ -1,0 +1,11 @@
+export const TORRES = 12;
+export const PISOS_POR_TORRE = 6;
+export const APTOS_POR_PISO = 4;
+export const TARIFAS_ID = 1;
+export const PIN_LOCK_KEY = 'andarrios_porteria_unlock';
+export const TURNO_DURACION_MS = 12 * 60 * 60 * 1000;
+export const SYNC_INTERVAL_MS = 30_000;
+export const SYNC_MAX_ATTEMPTS = 5;
+export const ZONA_HORARIA = 'America/Bogota';
+export const ACTIVIDAD_LIMIT = 200;
+export const PULL_LIMIT = 1000;
