@@ -15,6 +15,7 @@ export default function TarifasPage() {
   const [horasG, setHorasG] = useState(2);
   const [iva, setIva] = useState(19);
   const [capacidad, setCapacidad] = useState(0);
+  const [horasMinRe, setHorasMinRe] = useState(6);
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
@@ -22,11 +23,17 @@ export default function TarifasPage() {
       setCarro(tarifas.carro_mes); setMoto(tarifas.moto_mes); setVis(tarifas.vis_hora);
       setHorasG(tarifas.horas_gratis); setIva(tarifas.iva);
       setCapacidad(tarifas.capacidad_visitantes ?? 0);
+      setHorasMinRe(tarifas.horas_min_recortesia ?? 6);
     }
   }, [tarifas]);
 
   async function guardar() {
-    await guardarTarifas({ carro_mes: carro, moto_mes: moto, vis_hora: vis, horas_gratis: horasG, iva, capacidad_visitantes: capacidad });
+    await guardarTarifas({
+      carro_mes: carro, moto_mes: moto, vis_hora: vis,
+      horas_gratis: horasG, iva,
+      capacidad_visitantes: capacidad,
+      horas_min_recortesia: horasMinRe,
+    });
     setOk(true);
     setTimeout(() => setOk(false), 3000);
   }
@@ -39,7 +46,14 @@ export default function TarifasPage() {
         <Item label="Mensualidad carro" desc="Cobro mensual por vehículo tipo carro" prefix="$" value={carro} onChange={setCarro} />
         <Item label="Mensualidad moto" desc="Cobro mensual por vehículo tipo moto" prefix="$" value={moto} onChange={setMoto} />
         <Item label="Visitante por hora" desc="Tarifa por hora adicional" prefix="$" value={vis} onChange={setVis} />
-        <Item label="Horas gratis" desc="Horas iniciales sin costo" suffix="h" value={horasG} onChange={setHorasG} />
+        <Item label="Horas gratis" desc="Horas iniciales sin costo (cortesía)" suffix="h" value={horasG} onChange={setHorasG} />
+        <Item
+          label="Ventana sin re-cortesía"
+          desc="Si una placa reingresa antes de N horas tras su última salida, no aplica la cortesía."
+          suffix="h"
+          value={horasMinRe}
+          onChange={setHorasMinRe}
+        />
         <Item label="IVA (%)" desc="Porcentaje de IVA" suffix="%" value={iva} onChange={setIva} />
         <Item
           label="Capacidad de visitantes"

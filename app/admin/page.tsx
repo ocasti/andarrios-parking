@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/useAuth';
 import { usePagedQuery } from '@/lib/usePagedQuery';
 import { getSupabase } from '@/lib/supabase';
 import { cop, fmtD, fmtT, mesKey } from '@/lib/actions';
+import { colStartOfDay, colStartOfMonth } from '@/lib/tz';
 
 export default function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
@@ -90,8 +91,8 @@ function Stats() {
   const [s, setS] = useState<any>(null);
   useEffect(() => {
     (async () => {
-      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-      const mesStart = new Date(); mesStart.setDate(1); mesStart.setHours(0, 0, 0, 0);
+      const todayStart = colStartOfDay();
+      const mesStart = colStartOfMonth();
       const mk = mesKey();
       const [resR, visAct, visHoy, pagosHoy, blq, pagosMes, mens] = await Promise.all([
         sb.from('residentes').select('tipo').is('deleted_at', null),

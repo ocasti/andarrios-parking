@@ -39,15 +39,43 @@ export async function eliminarResidente(id: string) {
 }
 
 // ====== VISITANTES ======
-export async function ingresarVisitante(input: { cod: string; placa: string; tipo: Tipo; nombre?: string; tel?: string }) {
+import { getSupabase } from './supabase';
+
+/**
+ * Verifica contra Supabase si la placa tuvo una salida en las últimas
+ * `horasMin` horas. Si sí, la cortesía NO aplica en este ingreso.
+ */
+async function chequearCortesia(placa: string, horasMin: number): Promise<boolean> {
+  if (horasMin <= 0) return true;
+  try {
+    const sb = getSupabase();
+    const desde = new Date(Date.now() - horasMin * 3600 * 1000).toISOString();
+    const { data } = await sb
+      .from('visitantes')
+      .select('id, salida')
+      .eq('placa', placa)
+      .not('salida', 'is', null)
+      .gte('salida', desde)
+      .limit(1);
+    return !data || data.length === 0; // si encontró salida reciente, NO aplica
+  } catch {
+    return true; // offline / falla → conservador, dejamos cortesía
+  }
+}
+
+export async function ingresarVisitante(input: { cod: string; placa: string; tipo: Tipo; nombre?: string; tel?: string }, opts?: { horasMinRecortesia?: number }) {
   const id = uuid();
+  const horasMin = opts?.horasMinRecortesia ?? 6;
+  const cortesia_aplica = await chequearCortesia(input.placa, horasMin);
   const payload: Visitante = {
     id, client_id: id, ...input, entrada: now(),
-    salida: null, created_at: now(), updated_at: now(),
+    salida: null, cortesia_aplica,
+    created_at: now(), updated_at: now(),
   };
   await db().visitantes.put(payload);
   await enqueue({ table: 'visitantes', op: 'insert', payload });
-  await logActividad(`Ingreso visitante: ${payload.placa} (${payload.tipo}) → ${payload.cod}`);
+  const sufijo = cortesia_aplica ? '' : ' · sin cortesía (reingreso)';
+  await logActividad(`Ingreso visitante: ${payload.placa} (${payload.tipo}) → ${payload.cod}${sufijo}`);
   return payload;
 }
 
@@ -56,7 +84,8 @@ export async function salidaVisitante(id: string, tarifas: Tarifas) {
   if (!v) throw new Error('Visitante no encontrado');
   const entradaT = new Date(v.entrada).getTime();
   const horas = (Date.now() - entradaT) / 3600000;
-  const horasCobradas = Math.max(0, Math.ceil(horas - tarifas.horas_gratis));
+  const horasGratisEfectivas = (v.cortesia_aplica ?? true) ? tarifas.horas_gratis : 0;
+  const horasCobradas = Math.max(0, Math.ceil(horas - horasGratisEfectivas));
   const base = horasCobradas * tarifas.vis_hora;
   const iva = Math.round((base * tarifas.iva) / (100 + tarifas.iva));
   const total = base; // total ya incluye IVA en el base; mantener compat con HTML original
@@ -64,8 +93,9 @@ export async function salidaVisitante(id: string, tarifas: Tarifas) {
   const update = { salida: stamp, horas, base, iva, total, updated_at: stamp };
   await db().visitantes.update(id, update);
   await enqueue({ table: 'visitantes', op: 'update', where: { id }, payload: update });
-  await logActividad(`Salida: ${v.placa} · Cobrado: $${total.toLocaleString('es-CO')} (IVA $${iva.toLocaleString('es-CO')})`);
-  return { v: { ...v, ...update }, horas, base, iva, total, horasCobradas };
+  const sufijo = (v.cortesia_aplica ?? true) ? '' : ' (sin cortesía)';
+  await logActividad(`Salida: ${v.placa} · Cobrado: $${total.toLocaleString('es-CO')}${sufijo}`);
+  return { v: { ...v, ...update }, horas, base, iva, total, horasCobradas, cortesiaAplicada: (v.cortesia_aplica ?? true) };
 }
 
 // ====== MENSUALIDADES ======
@@ -151,7 +181,7 @@ export async function realizarCierre(stats: Omit<CierreCaja, 'id' | 'client_id' 
 // ====== TARIFAS ======
 export async function guardarTarifas(t: Partial<Tarifas>) {
   const stamp = now();
-  const merged: Tarifas = { id: 1, carro_mes: 20000, moto_mes: 10000, vis_hora: 1000, horas_gratis: 2, iva: 19, capacidad_visitantes: 0, ...t, updated_at: stamp };
+  const merged: Tarifas = { id: 1, carro_mes: 20000, moto_mes: 10000, vis_hora: 1000, horas_gratis: 2, iva: 19, capacidad_visitantes: 0, horas_min_recortesia: 6, ...t, updated_at: stamp };
   await db().tarifas.put(merged);
   await enqueue({ table: 'tarifas', op: 'update', where: { id: 1 }, payload: { ...t, updated_at: stamp } });
   await logActividad('Tarifas actualizadas');
@@ -166,18 +196,20 @@ export async function logActividad(msg: string, tipo: string = 'info') {
 }
 
 // ====== HELPERS ======
+import { colMonthKey } from './tz';
 export function mesKey(d = new Date()) {
-  return d.toISOString().slice(0, 7);
+  return colMonthKey(d);
 }
 export function genCod(torre: number, piso: number, apto: number) {
   return `T${String(torre).padStart(2, '0')}-${piso}0${apto}`;
 }
-export function calcCobroVisitante(horas: number, tarifas: Tarifas) {
-  const horasCobradas = Math.max(0, Math.ceil(horas - tarifas.horas_gratis));
+export function calcCobroVisitante(horas: number, tarifas: Tarifas, cortesiaAplica: boolean = true) {
+  const horasGratis = cortesiaAplica ? tarifas.horas_gratis : 0;
+  const horasCobradas = Math.max(0, Math.ceil(horas - horasGratis));
   const base = horasCobradas * tarifas.vis_hora;
   const iva = Math.round((base * tarifas.iva) / (100 + tarifas.iva));
-  return { base, iva, total: base, horasCobradas };
+  return { base, iva, total: base, horasCobradas, horasGratis };
 }
 export const cop = (n: number) => '$' + Math.round(n).toLocaleString('es-CO');
-export const fmtT = (d: string | number | Date) => new Date(d).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-export const fmtD = (d: string | number | Date) => new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+export const fmtT = (d: string | number | Date) => new Date(d).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' });
+export const fmtD = (d: string | number | Date) => new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Bogota' });

@@ -8,6 +8,7 @@ export interface Tarifas {
   horas_gratis: number;
   iva: number;
   capacidad_visitantes: number; // 0 = sin límite
+  horas_min_recortesia: number; // si reingresa antes de N h, no aplica cortesía
   updated_at?: string;
 }
 
@@ -42,6 +43,7 @@ export interface Visitante {
   base?: number | null;
   iva?: number | null;
   total?: number | null;
+  cortesia_aplica?: boolean;
   created_at?: string;
   updated_at?: string;
 }

@@ -4,6 +4,7 @@ import RequireGuardPin from '@/components/RequireGuardPin';
 import { useLive } from '@/lib/useLive';
 import { db } from '@/lib/db';
 import { cop, fmtT, fmtD } from '@/lib/actions';
+import { colDateStr } from '@/lib/tz';
 
 export default function Dashboard() {
   const residentes = useLive(() => db().residentes.filter((r) => !r.deleted_at).toArray()) ?? [];
@@ -11,9 +12,10 @@ export default function Dashboard() {
   const actividad = useLive(() => db().actividad.orderBy('ts').reverse().limit(15).toArray()) ?? [];
   const cierres = useLive(() => db().cierres.toArray()) ?? [];
 
-  const todayStr = new Date().toDateString();
-  const historial = useLive(() => db().visitantes.filter((v) => !!v.salida && new Date(v.salida!).toDateString() === todayStr).toArray()) ?? [];
-  const pagos = useLive(() => db().pagos.filter((p) => new Date(p.fecha).toDateString() === todayStr).toArray()) ?? [];
+  // "hoy" en zona Colombia
+  const todayStr = colDateStr();
+  const historial = useLive(() => db().visitantes.filter((v) => !!v.salida && colDateStr(v.salida!) === todayStr).toArray()) ?? [];
+  const pagos = useLive(() => db().pagos.filter((p) => colDateStr(p.fecha) === todayStr).toArray()) ?? [];
 
   const tarifas = useLive(() => db().tarifas.get(1));
   const carros = residentes.filter((r) => r.tipo === 'carro').length;

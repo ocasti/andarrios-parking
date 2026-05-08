@@ -13,7 +13,7 @@ export default function VisitantesPage() {
   const { isAdmin } = useAuth();
   const visitantes = useLive(() => db().visitantes.filter((v) => !v.salida).reverse().toArray()) ?? [];
   const bloqueados = useLive(() => db().bloqueados.filter((b) => !b.desbloqueado_at).toArray()) ?? [];
-  const tarifas = useLive(() => db().tarifas.get(1)) ?? { id: 1, carro_mes: 20000, moto_mes: 10000, vis_hora: 1000, horas_gratis: 2, iva: 19, capacidad_visitantes: 0 } as any;
+  const tarifas = useLive(() => db().tarifas.get(1)) ?? { id: 1, carro_mes: 20000, moto_mes: 10000, vis_hora: 1000, horas_gratis: 2, iva: 19, capacidad_visitantes: 0, horas_min_recortesia: 6 } as any;
 
   const capacidad: number = tarifas.capacidad_visitantes ?? 0;
   const ocupados = visitantes.length;
@@ -57,7 +57,10 @@ export default function VisitantesPage() {
       }
     }
 
-    await ingresarVisitante({ cod: apto, placa: placaUp, tipo, nombre: nombre.trim() || 'Visitante', tel: tel.trim() });
+    await ingresarVisitante(
+      { cod: apto, placa: placaUp, tipo, nombre: nombre.trim() || 'Visitante', tel: tel.trim() },
+      { horasMinRecortesia: tarifas.horas_min_recortesia ?? 6 },
+    );
     setTorre(''); setApto(''); setPlaca(''); setNombre(''); setTel('');
   }
 
@@ -65,8 +68,9 @@ export default function VisitantesPage() {
   const visSalida = visitantes.find((v) => v.id === salidaId);
   const calc = visSalida ? (() => {
     const horas = (Date.now() - new Date(visSalida.entrada).getTime()) / 3600000;
-    const c = calcCobroVisitante(horas, tarifas);
-    return { horas, ...c };
+    const cortesia = visSalida.cortesia_aplica ?? true;
+    const c = calcCobroVisitante(horas, tarifas, cortesia);
+    return { horas, cortesia, ...c };
   })() : null;
 
   return (
@@ -115,10 +119,11 @@ export default function VisitantesPage() {
               <thead><tr><th>Placa</th><th>Tipo</th><th>Apto</th><th>Nombre</th><th>Tel.</th><th>Ingreso</th><th>Tiempo</th><th>Cobro est.</th><th></th></tr></thead>
               <tbody>{visitantes.map((v) => {
                 const horas = (now - new Date(v.entrada).getTime()) / 3600000;
-                const c = calcCobroVisitante(horas, tarifas);
+                const cortesia = v.cortesia_aplica ?? true;
+                const c = calcCobroVisitante(horas, tarifas, cortesia);
                 const hStr = horas < 1 ? `${Math.round(horas * 60)}min` : `${horas.toFixed(1)}h`;
                 return (<tr key={v.id}>
-                  <td><b>{v.placa}</b></td>
+                  <td><b>{v.placa}</b>{!cortesia && <span className="bge bpendiente" title="Reingreso reciente — sin horas gratis" style={{ marginLeft: 6 }}>⚠️ Sin cortesía</span>}</td>
                   <td><span className="bge bvis">{v.tipo === 'carro' ? '🚗' : '🏍️'} {v.tipo}</span></td>
                   <td>{v.cod}</td><td>{v.nombre}</td>
                   <td style={{ color: 'var(--ink3)' }}>{v.tel || '—'}</td>
@@ -139,7 +144,11 @@ export default function VisitantesPage() {
             <div className="crow"><span>Apto visitado</span><span>{visSalida.cod}</span></div>
             <div className="crow"><span>Ingreso</span><span>{fmtT(visSalida.entrada)}</span></div>
             <div className="crow"><span>Tiempo total</span><span>{calc.horas.toFixed(2)} h</span></div>
-            <div className="crow"><span style={{ color: 'var(--leaf3)' }}>Horas gratis</span><span style={{ color: 'var(--leaf3)' }}>{Math.min(calc.horas, tarifas.horas_gratis).toFixed(1)} h</span></div>
+            {calc.cortesia ? (
+              <div className="crow"><span style={{ color: 'var(--leaf3)' }}>Horas gratis (cortesía)</span><span style={{ color: 'var(--leaf3)' }}>{Math.min(calc.horas, tarifas.horas_gratis).toFixed(1)} h</span></div>
+            ) : (
+              <div className="crow"><span style={{ color: 'var(--red)' }}>Sin cortesía (reingreso &lt;{tarifas.horas_min_recortesia ?? 6}h)</span><span style={{ color: 'var(--red)' }}>0 h</span></div>
+            )}
             <div className="crow"><span>Horas cobradas ({calc.horasCobradas}h × {cop(tarifas.vis_hora)})</span><span>{cop(calc.base)}</span></div>
             <div className="crow"><span>IVA ({tarifas.iva}%)</span><span>{cop(calc.iva)}</span></div>
             <div className="ctot"><span>TOTAL</span><span style={{ fontSize: 22 }}>{cop(calc.total)}</span></div>

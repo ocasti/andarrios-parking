@@ -3,14 +3,16 @@ import AppShell from '@/components/AppShell';
 import RequireGuardPin from '@/components/RequireGuardPin';
 import { useLive } from '@/lib/useLive';
 import { useAuth } from '@/lib/useAuth';
+import { colDateStr } from '@/lib/tz';
 import { db } from '@/lib/db';
 import { realizarCierre, cop, fmtT, fmtD } from '@/lib/actions';
 
 export default function CajaPage() {
   const { isAdmin } = useAuth();
-  const todayStr = new Date().toDateString();
-  const visitantesHoy = useLive(() => db().visitantes.filter((v) => !!v.salida && new Date(v.salida!).toDateString() === todayStr).toArray()) ?? [];
-  const pagosHoy = useLive(() => db().pagos.filter((p) => new Date(p.fecha).toDateString() === todayStr).toArray()) ?? [];
+  // "hoy" en zona Colombia
+  const todayStr = colDateStr();
+  const visitantesHoy = useLive(() => db().visitantes.filter((v) => !!v.salida && colDateStr(v.salida!) === todayStr).toArray()) ?? [];
+  const pagosHoy = useLive(() => db().pagos.filter((p) => colDateStr(p.fecha) === todayStr).toArray()) ?? [];
   const cierres = useLive(() => db().cierres.toArray()) ?? [];
 
   const totalVis = visitantesHoy.reduce((s, h) => s + (h.total ?? 0), 0);
