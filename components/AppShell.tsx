@@ -10,19 +10,18 @@ interface NavItem { href: string; label: string; icon: string; }
 // Menú del vigilante (sin login). Operación diaria.
 const NAV_VIGILANTE: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: '📊' },
-  { href: '/visitantes', label: 'Visitantes', icon: '🚗' },
-  { href: '/caja', label: 'Caja', icon: '💰' },
+  { href: '/visitors', label: 'Visitors', icon: '🚗' },
+  { href: '/cashier', label: 'Cashier', icon: '💰' },
 ];
-// Menú del admin (con login). Visualiza operación pero no edita; gestiona admin/reportes.
 const NAV_ADMIN: NavItem[] = [
   { href: '/admin', label: 'Panel', icon: '🛠️' },
-  { href: '/visitantes', label: 'Visitantes', icon: '🚗' },
-  { href: '/caja', label: 'Caja', icon: '💰' },
-  { href: '/residentes', label: 'Residentes', icon: '👥' },
-  { href: '/mensualidades', label: 'Mensualidades', icon: '📅' },
+  { href: '/visitors', label: 'Visitors', icon: '🚗' },
+  { href: '/cashier', label: 'Cashier', icon: '💰' },
+  { href: '/residents', label: 'Residents', icon: '👥' },
+  { href: '/monthly-fees', label: 'Monthly fees', icon: '📅' },
   { href: '/control', label: 'Control', icon: '🔒' },
-  { href: '/tarifas', label: 'Tarifas', icon: '🪙' },
-  { href: '/reportes', label: 'Reportes', icon: '📑' },
+  { href: '/pricing', label: 'Pricing', icon: '🪙' },
+  { href: '/reports', label: 'Reports', icon: '📑' },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
