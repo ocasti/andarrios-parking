@@ -7,8 +7,15 @@
 // =============================================================================
 
 import { getSupabase } from './supabase';
-import { db } from './db';
-import type { SyncOp, QueueRow } from './types';
+import { getDB } from '@/src/infrastructure/db/AndarriosDB';
+import type { QueueRow } from '@/src/infrastructure/db/AndarriosDB';
+
+type SyncOp = {
+  table: string;
+  op: 'insert' | 'update' | 'upsert' | 'delete';
+  payload: Record<string, unknown>;
+  where?: Record<string, unknown>;
+};
 
 type Status = 'online' | 'offline' | 'syncing';
 type Listener = (s: Status, pending: number) => void;
@@ -24,14 +31,14 @@ export function subscribeStatus(fn: Listener) {
 function emit() { listeners.forEach((l) => l(currentStatus, pendingCount)); }
 function setStatus(s: Status) { currentStatus = s; emit(); }
 async function refreshPending() {
-  pendingCount = await db().queue.count();
+  pendingCount = await getDB().queue.count();
   emit();
 }
 
 // ============== ENQUEUE ==============
 export async function enqueue(op: SyncOp) {
   const row: QueueRow = { ts: Date.now(), op, attempts: 0 };
-  await db().queue.add(row);
+  await getDB().queue.add(row);
   await refreshPending();
   // intento inmediato
   void runQueue();
@@ -50,15 +57,15 @@ export async function runQueue() {
   try {
     const sb = getSupabase();
     while (true) {
-      const item = await db().queue.orderBy('id').first();
+      const item = await getDB().queue.orderBy('id').first();
       if (!item) break;
       try {
         await applyOp(sb, item.op);
-        if (item.id !== undefined) await db().queue.delete(item.id);
+        if (item.id !== undefined) await getDB().queue.delete(item.id);
       } catch (err: any) {
         const msg = String(err?.message ?? err);
         if (item.id !== undefined) {
-          await db().queue.update(item.id, {
+          await getDB().queue.update(item.id, {
             attempts: item.attempts + 1,
             lastError: msg.slice(0, 500),
           });
@@ -68,7 +75,7 @@ export async function runQueue() {
           break;
         }
         if (item.attempts >= 5) {
-          if (item.id !== undefined) await db().queue.delete(item.id);
+          if (item.id !== undefined) await getDB().queue.delete(item.id);
           console.warn('[sync] Op descartada tras 5 intentos:', item.op, msg);
           continue;
         }
@@ -125,11 +132,11 @@ export async function pullAll() {
     if (typeof navigator !== 'undefined' && navigator.onLine) setStatus('online');
   }
 
-  async function pullTable(remote: string, local: keyof ReturnType<typeof db>, order = 'updated_at', limit = 1000) {
+  async function pullTable(remote: string, local: string, order = 'updated_at', limit = 1000) {
     try {
       const { data, error } = await sb.from(remote).select('*').order(order, { ascending: false }).limit(limit);
       if (error) throw error;
-      const tbl = (db() as any)[local];
+      const tbl = (getDB() as any)[local];
       if (Array.isArray(data) && tbl) {
         await tbl.bulkPut(data);
       }
@@ -141,7 +148,7 @@ export async function pullAll() {
   async function pullTarifas() {
     try {
       const { data } = await sb.from('tarifas').select('*').eq('id', 1).maybeSingle();
-      if (data) await db().tarifas.put(data);
+      if (data) await getDB().tarifas.put(data);
     } catch (e) {}
   }
 }
@@ -164,7 +171,7 @@ export async function initSync() {
 
   try {
     const sb = getSupabase();
-    const tables: Array<[string, keyof ReturnType<typeof db>]> = [
+    const tables: Array<[string, string]> = [
       ['residentes', 'residentes'],
       ['visitantes', 'visitantes'],
       ['mensualidades', 'mensualidades'],
@@ -178,7 +185,7 @@ export async function initSync() {
       sb.channel(`rt-${remote}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: remote }, async (payload: any) => {
           const row = payload.new ?? payload.old;
-          const tbl = (db() as any)[local];
+          const tbl = (getDB() as any)[local];
           if (!tbl) return;
           if (payload.eventType === 'DELETE') {
             if (row?.id) await tbl.delete(row.id);

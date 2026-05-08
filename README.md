@@ -1,48 +1,140 @@
-# Andarríos — Sistema de Parqueadero
+# Andarríos — Parqueadero
 
-PWA offline-first para el conjunto residencial Andarríos. Vigilante sin login, panel admin remoto autenticado, datos sincronizados con Supabase.
+PWA offline-first para gestión de parqueadero residencial. Funciona sin conexión y sincroniza automáticamente cuando hay red.
+
+## Roles
+
+| Rol | Acceso | Autenticación |
+|---|---|---|
+| **Vigilante** | Dashboard, Visitantes, Caja | PIN compartido del turno (12 h) |
+| **Admin** | Todo lo anterior + Residentes, Mensualidades, Control, Tarifas, Reportes, Panel | Login Supabase |
+
+---
 
 ## Stack
 
-- **Next.js 14 (App Router)** + **TypeScript** + **Tailwind**
-- **Supabase** — Postgres + Auth + Realtime
-- **Dexie (IndexedDB)** — caché offline + cola de operaciones
-- **Service Worker** — app-shell instalable como PWA
+| Capa | Tecnología |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| UI | React 18 + TypeScript |
+| Estilos | Tailwind CSS + styled-jsx (layout global) |
+| DB local | Dexie 4 (IndexedDB) — offline-first |
+| DB remota | Supabase (PostgreSQL + Realtime) |
+| Auth | Supabase Auth (admin) + PIN RPC (vigilante) |
+| Tests | Vitest + fake-indexeddb |
 
-## Cómo funciona offline
+---
 
-Cada acción del vigilante (registrar visitante, marcar pagado, etc.) se escribe primero en IndexedDB; la UI se actualiza al instante. Una entrada se agrega a la `queue` que un runner procesa contra Supabase cuando hay red. Cuando la red vuelve, la cola se drena automáticamente. Realtime mantiene IndexedDB al día con los cambios remotos (admins, otro vigilante, etc.).
+## Arquitectura — Clean Architecture
+
+```
+presentation → application → domain ← infrastructure
+```
+
+```
+src/
+├── domain/
+│   ├── entities/            # Modelos de negocio (Resident, Visitor, BlockedUnit…)
+│   ├── value-objects/       # LicensePlate, ApartmentCode, MonthKey, Money
+│   ├── services/            # CobroService, CortesiaService, FormatterService
+│   ├── use-cases/
+│   │   ├── visitors/        # CheckInVisitor, CheckOutVisitor
+│   │   ├── residents/       # RegisterResident, RemoveResident
+│   │   ├── monthly-fees/    # MarkAsPaid
+│   │   ├── daily-close/     # PerformDailyClose
+│   │   ├── pricing/         # UpdatePricing
+│   │   └── control/         # BlockUnit, UnblockUnit, ApprovePlate, RevokePlate
+│   └── repositories/        # Interfaces (ports) — solo tipos
+│
+├── infrastructure/
+│   ├── db/
+│   │   ├── AndarriosDB.ts   # Dexie — schema completo
+│   │   ├── mappers.ts       # Row ↔ Entity (snake_case ↔ camelCase)
+│   │   └── repositories/    # Dexie* + Sync* (escribe IndexedDB + encola Supabase)
+│   └── auth/
+│       └── PinLockGateway.ts
+│
+├── application/
+│   ├── actions.ts           # Wiring use-cases ↔ repos (punto de entrada de páginas)
+│   └── hooks/               # useAuth, usePricing, useSync, usePagedQuery
+│
+└── presentation/
+    └── components/
+        ├── layout/          # AppShell (nav, sync status, PIN lock)
+        ├── guards/          # RequireAdmin, RequireGuardPin
+        ├── ui/              # AptoSelector, Pagination, StatusBar
+        └── forms/           # VisitorCheckInForm
+
+app/                         # Next.js App Router — páginas delgadas
+├── page.tsx                 # Dashboard (vigilante)
+├── visitors/                # Ingreso/salida visitantes con cobro
+├── cashier/                 # Cierre de caja diario
+├── residents/               # CRUD residentes (admin)
+├── monthly-fees/            # Estado de pagos mensuales (admin)
+├── control/                 # Bloqueo de aptos + placas aprobadas (admin)
+├── pricing/                 # Tarifas (admin)
+├── reports/                 # Exportación Excel (admin)
+└── admin/                   # Panel con estadísticas y movimientos (admin)
+
+lib/                         # Utilidades compartidas (sync engine, supabase client)
+```
+
+### Regla de dependencias
+
+- `domain/` no importa nada externo
+- `infrastructure/` implementa interfaces de `domain/`
+- `application/` orquesta use-cases; no importa Dexie ni Supabase directamente
+- `presentation/` solo llama hooks — cero lógica de negocio inline
+- `app/` monta providers y llama componentes de presentación
+
+---
+
+## Sync offline-first
+
+Toda escritura sigue este flujo:
+
+```
+UI → actions.ts → SyncRepository → IndexedDB (inmediato)
+                                 ↘ queue (Dexie) → sync engine → Supabase
+```
+
+El sync engine (`lib/sync.ts`) procesa la cola en orden cuando hay red. Si falla, reintenta hasta 5 veces. Supabase Realtime mantiene IndexedDB sincronizado en la dirección remota → local.
+
+---
 
 ## Variables de entorno
 
-Crea `.env.local`:
+Copia `.env.local.example` a `.env.local` y completa:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://yuxllsjvbaabqmselqro.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_…
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-## Desarrollo local
+---
+
+## Comandos
 
 ```bash
-npm install
-npm run dev
+npm run dev          # Servidor de desarrollo
+npm run build        # Build de producción
+npm run lint         # ESLint
+npm run test         # Vitest (304 tests)
+npm run test:ui      # Vitest UI
+npm run test:cov     # Cobertura
 ```
 
-Abre <http://localhost:3000>.
+---
 
-## Rutas
+## Dominio
 
-- `/` Dashboard con métricas en tiempo real
-- `/visitantes` Ingreso y salida con cobro automático
-- `/residentes` Registro de vehículos por torre/apto
-- `/mensualidades` Estado de pagos del mes
-- `/control` Bloqueo de aptos morosos y placas aprobadas
-- `/caja` Cierre de caja diario
-- `/tarifas` Configuración de tarifas (clave por defecto: `123456`)
-- `/reportes` Exportar datos a Excel
-- `/admin` Panel admin con login (vista de movimientos, pagos, cierres)
-
-## Despliegue
-
-El proyecto está conectado a Vercel. Cualquier push a `main` redespliega automáticamente.
+| Término | Significado |
+|---|---|
+| `residente` | Vehículo con mensualidad fija |
+| `visitante` | Vehículo de paso — cobro por hora |
+| `cortesía` | Primeras N horas sin costo |
+| `cod` | Código de apto: `T01-101` (torre-piso-unidad) |
+| `mesKey` | `YYYY-MM` en zona horaria Colombia |
+| `cierre de caja` | Corte diario de recaudo |
+| `bloqueado` | Apto con restricción de ingreso (mora) |
+| `placa aprobada` | Placa pre-autorizada para un apto |
