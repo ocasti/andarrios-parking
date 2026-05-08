@@ -12,19 +12,19 @@ interface NavItem { href: string; label: string; icon: string; }
 
 const NAV_VIGILANTE: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: '📊' },
-  { href: '/visitors', label: 'Visitors', icon: '🚗' },
-  { href: '/cashier', label: 'Cashier', icon: '💰' },
+  { href: '/visitors', label: 'Visitantes', icon: '🚗' },
+  { href: '/cashier', label: 'Caja', icon: '💰' },
 ];
 
 const NAV_ADMIN: NavItem[] = [
   { href: '/admin', label: 'Panel', icon: '🛠️' },
-  { href: '/visitors', label: 'Visitors', icon: '🚗' },
-  { href: '/cashier', label: 'Cashier', icon: '💰' },
-  { href: '/residents', label: 'Residents', icon: '👥' },
-  { href: '/monthly-fees', label: 'Monthly fees', icon: '📅' },
+  { href: '/visitors', label: 'Visitantes', icon: '🚗' },
+  { href: '/cashier', label: 'Caja', icon: '💰' },
+  { href: '/residents', label: 'Residentes', icon: '👥' },
+  { href: '/monthly-fees', label: 'Mensualidades', icon: '📅' },
   { href: '/control', label: 'Control', icon: '🔒' },
-  { href: '/pricing', label: 'Pricing', icon: '🪙' },
-  { href: '/reports', label: 'Reports', icon: '📑' },
+  { href: '/pricing', label: 'Tarifas', icon: '🪙' },
+  { href: '/reports', label: 'Reportes', icon: '📑' },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
