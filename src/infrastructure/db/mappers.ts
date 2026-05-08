@@ -6,6 +6,8 @@ import type {
   ActivityLog,
   DailyClose,
   MonthlyPayment,
+  BlockedUnit,
+  ApprovedPlate,
 } from '../../domain/entities';
 import type {
   ResidentRow,
@@ -15,6 +17,8 @@ import type {
   ActivityLogRow,
   DailyCloseRow,
   MonthlyPaymentRow,
+  BlockedUnitRow,
+  ApprovedPlateRow,
 } from './AndarriosDB';
 import type { VehicleType, FeeStatus } from '../../domain/entities';
 
@@ -206,4 +210,42 @@ export const monthlyPaymentToRow = (p: MonthlyPayment): MonthlyPaymentRow => ({
   fecha: p.date,
   monto: p.amount,
   mes_key: p.monthKey,
+});
+
+// --- BlockedUnit ---
+
+export const blockedUnitFromRow = (b: BlockedUnitRow): BlockedUnit => ({
+  id: b.id,
+  aptCode: b.cod,
+  reason: b.motivo,
+  blockedAt: b.fecha_bloqueo,
+  unblockedAt: b.desbloqueado_at,
+});
+
+export const blockedUnitToRow = (b: BlockedUnit): BlockedUnitRow => ({
+  id: b.id,
+  cod: b.aptCode,
+  motivo: b.reason,
+  fecha_bloqueo: b.blockedAt,
+  desbloqueado_at: b.unblockedAt,
+});
+
+// --- ApprovedPlate ---
+
+export const approvedPlateFromRow = (p: ApprovedPlateRow): ApprovedPlate => ({
+  id: p.id,
+  aptCode: p.cod,
+  plate: p.placa,
+  vehicleType: (p.tipo === 'carro' ? 'car' : 'motorcycle') as VehicleType,
+  approvedAt: p.fecha_aprobacion,
+  deletedAt: p.deleted_at,
+});
+
+export const approvedPlateToRow = (p: ApprovedPlate): ApprovedPlateRow => ({
+  id: p.id,
+  cod: p.aptCode,
+  placa: p.plate,
+  tipo: p.vehicleType === 'car' ? 'carro' : 'moto',
+  fecha_aprobacion: p.approvedAt,
+  deleted_at: p.deletedAt,
 });

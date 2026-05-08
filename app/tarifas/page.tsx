@@ -1,14 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
-import AppShell from '@/components/AppShell';
-import RequireAdmin from '@/components/RequireAdmin';
-import { useLive } from '@/lib/useLive';
-import { db } from '@/lib/db';
-import { guardarTarifas } from '@/lib/actions';
+import AppShell from '@/src/presentation/components/layout/AppShell';
+import RequireAdmin from '@/src/presentation/components/guards/RequireAdmin';
+import { usePricing } from '@/src/application/hooks/usePricing';
+import { doUpdatePricing } from '@/src/application/actions';
 import { getSupabase } from '@/lib/supabase';
 
 export default function TarifasPage() {
-  const tarifas = useLive(() => db().tarifas.get(1));
+  const pricing = usePricing();
   const [carro, setCarro] = useState(20000);
   const [moto, setMoto] = useState(10000);
   const [vis, setVis] = useState(1000);
@@ -19,21 +18,25 @@ export default function TarifasPage() {
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
-    if (tarifas) {
-      setCarro(tarifas.carro_mes); setMoto(tarifas.moto_mes); setVis(tarifas.vis_hora);
-      setHorasG(tarifas.horas_gratis); setIva(tarifas.iva);
-      setCapacidad(tarifas.capacidad_visitantes ?? 0);
-      setHorasMinRe(tarifas.horas_min_recortesia ?? 6);
-    }
-  }, [tarifas]);
+    setCarro(pricing.carMonthlyRate);
+    setMoto(pricing.motorcycleMonthlyRate);
+    setVis(pricing.hourlyRate);
+    setHorasG(pricing.freeHours);
+    setIva(pricing.iva);
+    setCapacidad(pricing.visitorCapacity);
+    setHorasMinRe(pricing.minHoursForCourtesy);
+  }, [pricing]);
 
   async function guardar() {
-    await guardarTarifas({
-      carro_mes: carro, moto_mes: moto, vis_hora: vis,
-      horas_gratis: horasG, iva,
-      capacidad_visitantes: capacidad,
-      horas_min_recortesia: horasMinRe,
-    });
+    await doUpdatePricing({
+      carMonthlyRate: carro,
+      motorcycleMonthlyRate: moto,
+      hourlyRate: vis,
+      freeHours: horasG,
+      iva,
+      visitorCapacity: capacidad,
+      minHoursForCourtesy: horasMinRe,
+    }, pricing);
     setOk(true);
     setTimeout(() => setOk(false), 3000);
   }

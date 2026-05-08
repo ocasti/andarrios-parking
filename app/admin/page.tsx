@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
-import AppShell from '@/components/AppShell';
-import Pagination from '@/components/Pagination';
-import { useAuth } from '@/lib/useAuth';
-import { usePagedQuery } from '@/lib/usePagedQuery';
+import AppShell from '@/src/presentation/components/layout/AppShell';
+import Pagination from '@/src/presentation/components/ui/Pagination';
+import { useAuth, logout } from '@/src/application/hooks/useAuth';
+import { usePagedQuery } from '@/src/application/hooks/usePagedQuery';
 import { getSupabase } from '@/lib/supabase';
-import { cop, fmtD, fmtT, mesKey } from '@/lib/actions';
-import { colStartOfDay, colStartOfMonth } from '@/lib/tz';
+import { formatCOP, formatDate, formatTime, colombiaStartOfDay, colombiaStartOfMonth } from '@/src/domain/services/FormatterService';
+import { MonthKey } from '@/src/domain/value-objects/MonthKey';
 
 export default function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
@@ -21,10 +21,10 @@ export default function AdminPage() {
   if (!user || !isAdmin) {
     async function login() {
       setError(''); setBusy(true);
-      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      const { error: signInError } = await sb.auth.signInWithPassword({ email, password: pass });
       setBusy(false);
-      if (error) {
-        setError(error.message);
+      if (signInError) {
+        setError(signInError.message);
         return;
       }
       const { data } = await sb.auth.getUser();
@@ -91,9 +91,9 @@ function Stats() {
   const [s, setS] = useState<any>(null);
   useEffect(() => {
     (async () => {
-      const todayStart = colStartOfDay();
-      const mesStart = colStartOfMonth();
-      const mk = mesKey();
+      const todayStart = colombiaStartOfDay(new Date());
+      const mesStart = colombiaStartOfMonth(new Date());
+      const mk = MonthKey.current().value;
       const [resR, visAct, visHoy, pagosHoy, blq, pagosMes, mens] = await Promise.all([
         sb.from('residentes').select('tipo').is('deleted_at', null),
         sb.from('visitantes').select('id', { count: 'exact', head: true }).is('salida', null),
@@ -126,8 +126,8 @@ function Stats() {
     <div className="mets">
       <div className="met"><div className="met-ic">👥</div><div className="met-v">{s.residentes}</div><div className="met-l">Residentes ({s.carros} carros · {s.motos} motos)</div></div>
       <div className="met warn"><div className="met-ic">🚗</div><div className="met-v">{s.visAct}</div><div className="met-l">Visitantes activos</div></div>
-      <div className="met"><div className="met-ic">💵</div><div className="met-v">{cop(s.recHoy)}</div><div className="met-l">Recaudo hoy</div></div>
-      <div className="met"><div className="met-ic">📅</div><div className="met-v">{cop(s.recMes)}</div><div className="met-l">Recaudo del mes</div></div>
+      <div className="met"><div className="met-ic">💵</div><div className="met-v">{formatCOP(s.recHoy)}</div><div className="met-l">Recaudo hoy</div></div>
+      <div className="met"><div className="met-ic">📅</div><div className="met-v">{formatCOP(s.recMes)}</div><div className="met-l">Recaudo del mes</div></div>
       <div className="met dng"><div className="met-ic">🚫</div><div className="met-v">{s.bloqueados}</div><div className="met-l">Aptos bloqueados</div></div>
       <div className="met warn"><div className="met-ic">⏳</div><div className="met-v">{s.pendientes}</div><div className="met-l">Mens. pendientes</div></div>
       <div className="met"><div className="met-ic">✅</div><div className="met-v">{s.pagados}</div><div className="met-l">Mens. pagadas</div></div>
@@ -143,7 +143,7 @@ function ActivityList() {
         q.rows.map((a) => (
           <div key={a.id} style={{ display: 'flex', gap: 10, marginBottom: '.7rem' }}>
             <span style={{ width: 8, height: 8, marginTop: 6, borderRadius: 4, background: 'var(--leaf3)', flexShrink: 0 }} />
-            <div><p style={{ fontSize: 13 }}>{a.msg}</p><small style={{ color: 'var(--ink3)' }}>{fmtT(a.ts)} · {fmtD(a.ts)}</small></div>
+            <div><p style={{ fontSize: 13 }}>{a.msg}</p><small style={{ color: 'var(--ink3)' }}>{formatTime(a.ts)} · {formatDate(a.ts)}</small></div>
           </div>
         ))
       }
@@ -162,9 +162,9 @@ function MovimientosList() {
           <tbody>
             {q.rows.map((h) => (
               <tr key={h.id}>
-                <td>{fmtD(h.salida)}</td><td><b>{h.placa}</b></td><td>{h.tipo}</td>
-                <td>{h.cod}</td><td>{fmtT(h.entrada)}</td><td>{fmtT(h.salida)}</td>
-                <td><b>{cop(h.total ?? 0)}</b></td>
+                <td>{formatDate(h.salida)}</td><td><b>{h.placa}</b></td><td>{h.tipo}</td>
+                <td>{h.cod}</td><td>{formatTime(h.entrada)}</td><td>{formatTime(h.salida)}</td>
+                <td><b>{formatCOP(h.total ?? 0)}</b></td>
               </tr>
             ))}
           </tbody>
@@ -185,9 +185,9 @@ function PagosList() {
           <tbody>
             {q.rows.map((p) => (
               <tr key={p.id}>
-                <td>{fmtD(p.fecha)} {fmtT(p.fecha)}</td>
+                <td>{formatDate(p.fecha)} {formatTime(p.fecha)}</td>
                 <td><b>{p.placa}</b></td><td>{p.cod}</td>
-                <td>{p.nombre}</td><td>{p.mes_key}</td><td><b>{cop(p.monto)}</b></td>
+                <td>{p.nombre}</td><td>{p.mes_key}</td><td><b>{formatCOP(p.monto)}</b></td>
               </tr>
             ))}
           </tbody>
@@ -208,10 +208,10 @@ function CierresList() {
           <tbody>
             {q.rows.map((c) => (
               <tr key={c.id}>
-                <td>{fmtD(c.fecha)}</td>
-                <td>{c.cobros_vis}</td><td>{cop(c.total_vis)}</td>
-                <td>{c.cobros_mens}</td><td>{cop(c.total_mens)}</td>
-                <td>{cop(c.total_iva)}</td><td><b>{cop(c.total)}</b></td>
+                <td>{formatDate(c.fecha)}</td>
+                <td>{c.cobros_vis}</td><td>{formatCOP(c.total_vis)}</td>
+                <td>{c.cobros_mens}</td><td>{formatCOP(c.total_mens)}</td>
+                <td>{formatCOP(c.total_iva)}</td><td><b>{formatCOP(c.total)}</b></td>
               </tr>
             ))}
           </tbody>
@@ -221,3 +221,4 @@ function CierresList() {
     </div>
   );
 }
+

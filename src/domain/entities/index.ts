@@ -2,6 +2,7 @@ export * from './Resident';
 export * from './Visitor';
 export * from './MonthlyFee';
 export * from './PricingConfig';
+export * from './ApprovedPlate';
 export * from './BlockedUnit';
 export * from './DailyClose';
 export * from './ActivityLog';

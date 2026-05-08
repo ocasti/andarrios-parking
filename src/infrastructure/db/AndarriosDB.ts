@@ -89,6 +89,23 @@ export interface MonthlyPaymentRow {
   mes_key: string;
 }
 
+export interface BlockedUnitRow {
+  id: string;
+  cod: string;
+  motivo: string;
+  fecha_bloqueo: string;
+  desbloqueado_at: string | null;
+}
+
+export interface ApprovedPlateRow {
+  id: string;
+  cod: string;
+  placa: string;
+  tipo: string;
+  fecha_aprobacion: string;
+  deleted_at: string | null;
+}
+
 export interface QueueRow {
   id?: number;
   ts: number;
@@ -102,6 +119,8 @@ export class AndarriosDB extends Dexie {
   visitantes!: Table<VisitorRow, string>;
   mensualidades!: Table<MonthlyFeeRow, string>;
   pagos!: Table<MonthlyPaymentRow, string>;
+  bloqueados!: Table<BlockedUnitRow, string>;
+  placas_aprobadas!: Table<ApprovedPlateRow, string>;
   cierres!: Table<DailyCloseRow, string>;
   actividad!: Table<ActivityLogRow, string>;
   tarifas!: Table<PricingRow, number>;
@@ -115,6 +134,8 @@ export class AndarriosDB extends Dexie {
       visitantes: 'id, placa, cod, salida',
       mensualidades: 'id, residente_id, mes_key, [residente_id+mes_key]',
       pagos: 'id, fecha, mes_key',
+      bloqueados: 'id, cod, desbloqueado_at',
+      placas_aprobadas: 'id, cod, placa, deleted_at',
       cierres: 'id, fecha_str',
       actividad: 'id, ts',
       tarifas: 'id',

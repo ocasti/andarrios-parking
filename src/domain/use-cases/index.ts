@@ -1,3 +1,7 @@
+export * from './control/ApprovePlate';
+export * from './control/BlockUnit';
+export * from './control/RevokePlate';
+export * from './control/UnblockUnit';
 export * from './visitantes/CheckInVisitor';
 export * from './visitantes/CheckOutVisitor';
 export * from './residentes/RegisterResident';

@@ -1,3 +1,5 @@
+export * from './IApprovedPlateRepository';
+export * from './IBlockedUnitRepository';
 export * from './IResidentRepository';
 export * from './IVisitorRepository';
 export * from './IMonthlyFeeRepository';
