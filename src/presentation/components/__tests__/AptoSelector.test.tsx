@@ -8,15 +8,15 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('AptoSelector', () => {
-  it('renderiza select de torre y apartamento', () => {
-    render(<AptoSelector torre="" apto="" onChange={vi.fn()} />);
-    expect(screen.getByLabelText('Torre')).toBeInTheDocument();
-    expect(screen.getByLabelText('Apartamento')).toBeInTheDocument();
+  it('renders tower and apartment selects', () => {
+    render(<AptoSelector tower="" apt="" onChange={vi.fn()} />);
+    expect(screen.getByLabelText('Tower')).toBeInTheDocument();
+    expect(screen.getByLabelText('Apartment')).toBeInTheDocument();
   });
 
-  it('no muestra opciones de apartamento cuando no hay torre seleccionada', () => {
-    render(<AptoSelector torre="" apto="" onChange={vi.fn()} />);
-    const aptoSelect = screen.getByLabelText('Apartamento');
+  it('does not show apartment options when no tower is selected', () => {
+    render(<AptoSelector tower="" apt="" onChange={vi.fn()} />);
+    const aptoSelect = screen.getByLabelText('Apartment');
     // Only the placeholder option should be present
     expect(aptoSelect).toBeDisabled();
     const options = Array.from(aptoSelect.querySelectorAll('option'));
@@ -24,27 +24,27 @@ describe('AptoSelector', () => {
     expect(options[0].value).toBe('');
   });
 
-  it('llama onChange con torre y string vacío al cambiar torre', () => {
+  it('calls onChange with tower and empty string when tower changes', () => {
     const onChange = vi.fn();
-    render(<AptoSelector torre="" apto="" onChange={onChange} />);
-    fireEvent.change(screen.getByLabelText('Torre'), { target: { value: '3' } });
+    render(<AptoSelector tower="" apt="" onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Tower'), { target: { value: '3' } });
     expect(onChange).toHaveBeenCalledWith('3', '');
   });
 
-  it('genera las opciones correctas de apartamento para una torre', () => {
-    render(<AptoSelector torre="8" apto="" onChange={vi.fn()} />);
-    const aptoSelect = screen.getByLabelText('Apartamento');
+  it('generates the correct apartment options for a tower', () => {
+    render(<AptoSelector tower="8" apt="" onChange={vi.fn()} />);
+    const aptoSelect = screen.getByLabelText('Apartment');
     const options = Array.from(aptoSelect.querySelectorAll('option'));
-    // 6 pisos × 4 aptos = 24 options + 1 placeholder = 25
+    // 6 floors × 4 units = 24 options + 1 placeholder = 25
     expect(options).toHaveLength(25);
-    // First real option: piso 1, apto 1 → T08-101
+    // First real option: floor 1, unit 1 → T08-101
     expect(options[1].value).toBe('T08-101');
-    // Last option: piso 6, apto 4 → T08-604
+    // Last option: floor 6, unit 4 → T08-604
     expect(options[24].value).toBe('T08-604');
   });
 
-  it('muestra el código de apto en el input readonly', () => {
-    render(<AptoSelector torre="1" apto="T01-201" onChange={vi.fn()} />);
+  it('shows the apartment code in the readonly input', () => {
+    render(<AptoSelector tower="1" apt="T01-201" onChange={vi.fn()} />);
     const input = screen.getByDisplayValue('T01-201');
     expect(input).toHaveAttribute('readOnly');
   });

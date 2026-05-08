@@ -1,37 +1,34 @@
 /**
  * CortesiaService
- * Evalúa si aplican las horas de cortesía para un ingreso de visitante.
+ * Evaluates whether courtesy hours apply for a visitor check-in.
  *
- * Regla: cortesía NO aplica si el vehículo tuvo una salida dentro de las
- * últimas `horasMinRecortesia` horas (reingreso rápido).
- * Con horasMinRecortesia <= 0, siempre aplica.
+ * Rule: courtesy does NOT apply if the vehicle had a check-out within the last
+ * `minHoursForCourtesy` hours (quick re-entry).
+ * With minHoursForCourtesy <= 0, courtesy always applies.
  */
 
-export interface HistorialSalida {
-  salidaAt: string; // ISO string
+export interface ExitHistory {
+  checkedOutAt: string; // ISO string
 }
 
-/** @deprecated Use HistorialSalida */
-export type HistorialReciente = HistorialSalida;
-
 /**
- * Devuelve `true` si la cortesía aplica para este ingreso.
- * @param historial  Salidas recientes encontradas para la placa (ya filtradas por tiempo)
- * @param horasMinRecortesia  Ventana de tiempo en horas; ≤0 siempre aplica
+ * Returns `true` if courtesy applies for this check-in.
+ * @param history  Recent exits found for the plate (already filtered by time)
+ * @param minHoursForCourtesy  Time window in hours; <=0 always applies
  */
-export function evaluarCortesia(
-  historial: HistorialSalida[],
-  horasMinRecortesia: number,
+export function evaluateCourtesy(
+  history: ExitHistory[],
+  minHoursForCourtesy: number,
 ): boolean {
-  if (horasMinRecortesia <= 0) return true;
-  return historial.length === 0;
+  if (minHoursForCourtesy <= 0) return true;
+  return history.length === 0;
 }
 
 /**
- * Calcula la fecha de inicio de la ventana de cortesía.
- * @param horas  Cantidad de horas hacia atrás
- * @param ahora  Referencia de "ahora" (inyectable para tests)
+ * Calculates the start date of the courtesy window.
+ * @param hours  Number of hours to look back
+ * @param now  Reference for "now" (injectable for tests)
  */
-export function calcularDesde(horas: number, ahora: Date = new Date()): Date {
-  return new Date(ahora.getTime() - horas * 3600 * 1000);
+export function calculateSince(hours: number, now: Date = new Date()): Date {
+  return new Date(now.getTime() - hours * 3600 * 1000);
 }

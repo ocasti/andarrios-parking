@@ -22,33 +22,33 @@ describe('RequireAdmin', () => {
     mockReplace.mockClear();
   });
 
-  it('muestra children cuando isAdmin=true', () => {
+  it('shows children when isAdmin=true', () => {
     mockUseAuth.mockReturnValue({ user: { id: '1' }, isAdmin: true, loading: false });
     render(
       <RequireAdmin>
-        <span>Contenido admin</span>
+        <span>Admin content</span>
       </RequireAdmin>
     );
-    expect(screen.getByText('Contenido admin')).toBeInTheDocument();
+    expect(screen.getByText('Admin content')).toBeInTheDocument();
   });
 
-  it('redirige a /admin cuando isAdmin=false y no loading', () => {
+  it('redirects to /admin when isAdmin=false and not loading', () => {
     mockUseAuth.mockReturnValue({ user: null, isAdmin: false, loading: false });
     render(
       <RequireAdmin>
-        <span>Oculto</span>
+        <span>Hidden</span>
       </RequireAdmin>
     );
     expect(mockReplace).toHaveBeenCalledWith('/admin');
   });
 
-  it('muestra texto de carga cuando loading=true', () => {
+  it('shows loading text when loading=true', () => {
     mockUseAuth.mockReturnValue({ user: null, isAdmin: false, loading: true });
     render(
       <RequireAdmin>
-        <span>Oculto</span>
+        <span>Hidden</span>
       </RequireAdmin>
     );
-    expect(screen.getByText('Verificando acceso…')).toBeInTheDocument();
+    expect(screen.getByText('Verifying access…')).toBeInTheDocument();
   });
 });

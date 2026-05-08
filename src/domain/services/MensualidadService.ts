@@ -1,29 +1,29 @@
 /**
  * MensualidadService
- * Lógica de dominio para mensualidades de residentes.
+ * Domain logic for resident monthly fees.
  */
 
-import type { TipoVehiculo } from '../entities';
-import { ZONA_HORARIA } from '../constants';
+import type { VehicleType } from '../entities';
+import { TIMEZONE } from '../constants';
 
-export interface TarifaMensual {
-  carroMes: number;
-  motoMes: number;
+export interface MonthlyRateConfig {
+  carMonthlyRate: number;
+  motorcycleMonthlyRate: number;
 }
 
 /**
- * Retorna el monto de mensualidad según el tipo de vehículo.
+ * Returns the monthly fee amount based on vehicle type.
  */
-export function calcularMontoMensualidad(tipo: TipoVehiculo, tarifa: TarifaMensual): number {
-  return tipo === 'carro' ? tarifa.carroMes : tarifa.motoMes;
+export function calculateMonthlyAmount(vehicleType: VehicleType, config: MonthlyRateConfig): number {
+  return vehicleType === 'car' ? config.carMonthlyRate : config.motorcycleMonthlyRate;
 }
 
 /**
- * Genera la clave de mes en formato YYYY-MM para la zona horaria Colombia.
+ * Generates the month key in YYYY-MM format for the Colombia timezone.
  */
-export function generarMesKey(fecha: Date = new Date()): string {
+export function generateMonthKey(fecha: Date = new Date()): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: ZONA_HORARIA,
+    timeZone: TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -32,8 +32,8 @@ export function generarMesKey(fecha: Date = new Date()): string {
 }
 
 /**
- * Compara dos mesKeys por igualdad estricta.
+ * Compares two monthKeys for strict equality.
  */
-export function esMismoMes(a: string, b: string): boolean {
+export function isSameMonth(a: string, b: string): boolean {
   return a === b;
 }

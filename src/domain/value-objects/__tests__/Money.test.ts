@@ -3,31 +3,31 @@ import { Money } from '../Money';
 
 describe('Money', () => {
   describe('of', () => {
-    it('acepta un valor positivo', () => {
+    it('accepts a positive value', () => {
       // Arrange / Act
       const m = Money.of(1500);
       // Assert
       expect(m.amount).toBe(1500);
     });
 
-    it('acepta el valor cero', () => {
+    it('accepts zero value', () => {
       // Arrange / Act
       const m = Money.of(0);
       // Assert
       expect(m.amount).toBe(0);
     });
 
-    it('lanza con valor negativo', () => {
+    it('throws with negative value', () => {
       // Arrange / Act & Assert
-      expect(() => Money.of(-1)).toThrow('Money inválido');
+      expect(() => Money.of(-1)).toThrow('invalid Money');
     });
 
-    it('lanza con NaN', () => {
+    it('throws with NaN', () => {
       // Arrange / Act & Assert
-      expect(() => Money.of(NaN)).toThrow('Money inválido');
+      expect(() => Money.of(NaN)).toThrow('invalid Money');
     });
 
-    it('redondea decimales al entero más cercano', () => {
+    it('rounds decimals to nearest integer', () => {
       // Arrange / Act
       const m = Money.of(1500.7);
       // Assert
@@ -36,14 +36,14 @@ describe('Money', () => {
   });
 
   describe('zero', () => {
-    it('retorna un monto de 0', () => {
+    it('returns an amount of 0', () => {
       // Arrange / Act
       const m = Money.zero();
       // Assert
       expect(m.amount).toBe(0);
     });
 
-    it('isZero retorna true para zero()', () => {
+    it('isZero returns true for zero()', () => {
       // Arrange / Act
       const m = Money.zero();
       // Assert
@@ -52,7 +52,7 @@ describe('Money', () => {
   });
 
   describe('add', () => {
-    it('suma correctamente dos montos', () => {
+    it('correctly adds two amounts', () => {
       // Arrange
       const a = Money.of(1000);
       const b = Money.of(500);
@@ -62,7 +62,7 @@ describe('Money', () => {
       expect(result.amount).toBe(1500);
     });
 
-    it('suma con cero da el mismo valor', () => {
+    it('adding zero returns the same value', () => {
       // Arrange
       const a = Money.of(2000);
       const b = Money.zero();
@@ -74,7 +74,7 @@ describe('Money', () => {
   });
 
   describe('multiply', () => {
-    it('multiplica correctamente por un factor positivo', () => {
+    it('correctly multiplies by a positive factor', () => {
       // Arrange
       const m = Money.of(1000);
       // Act
@@ -83,7 +83,7 @@ describe('Money', () => {
       expect(result.amount).toBe(3000);
     });
 
-    it('multiplica y redondea el resultado', () => {
+    it('multiplies and rounds the result', () => {
       // Arrange
       const m = Money.of(1000);
       // Act
@@ -92,7 +92,7 @@ describe('Money', () => {
       expect(result.amount).toBe(1500);
     });
 
-    it('multiplica por 0 da cero', () => {
+    it('multiplying by 0 gives zero', () => {
       // Arrange
       const m = Money.of(1000);
       // Act
@@ -101,16 +101,16 @@ describe('Money', () => {
       expect(result.amount).toBe(0);
     });
 
-    it('lanza con factor negativo', () => {
+    it('throws with negative factor', () => {
       // Arrange
       const m = Money.of(1000);
       // Act & Assert
-      expect(() => m.multiply(-1)).toThrow('factor inválido');
+      expect(() => m.multiply(-1)).toThrow('invalid factor');
     });
   });
 
   describe('subtract', () => {
-    it('resta correctamente dos montos', () => {
+    it('correctly subtracts two amounts', () => {
       // Arrange
       const a = Money.of(2000);
       const b = Money.of(500);
@@ -120,7 +120,7 @@ describe('Money', () => {
       expect(result.amount).toBe(1500);
     });
 
-    it('resta que resulta en cero', () => {
+    it('subtraction resulting in zero', () => {
       // Arrange
       const a = Money.of(1000);
       const b = Money.of(1000);
@@ -130,17 +130,17 @@ describe('Money', () => {
       expect(result.amount).toBe(0);
     });
 
-    it('lanza si el resultado sería negativo', () => {
+    it('throws if result would be negative', () => {
       // Arrange
       const a = Money.of(500);
       const b = Money.of(1000);
       // Act & Assert
-      expect(() => a.subtract(b)).toThrow('resultado negativo');
+      expect(() => a.subtract(b)).toThrow('negative result');
     });
   });
 
   describe('format', () => {
-    it('retorna string con formato COP para 1500', () => {
+    it('returns string with COP format for 1500', () => {
       // Arrange
       const m = Money.of(1500);
       // Act
@@ -149,7 +149,7 @@ describe('Money', () => {
       expect(result).toContain('1.500');
     });
 
-    it('retorna string que incluye el símbolo de moneda', () => {
+    it('returns string that includes the currency symbol', () => {
       // Arrange
       const m = Money.of(1500);
       // Act
@@ -160,7 +160,7 @@ describe('Money', () => {
   });
 
   describe('equals', () => {
-    it('retorna true para el mismo monto', () => {
+    it('returns true for the same amount', () => {
       // Arrange
       const a = Money.of(1000);
       const b = Money.of(1000);
@@ -170,7 +170,7 @@ describe('Money', () => {
       expect(result).toBe(true);
     });
 
-    it('retorna false para montos diferentes', () => {
+    it('returns false for different amounts', () => {
       // Arrange
       const a = Money.of(1000);
       const b = Money.of(2000);
@@ -182,14 +182,14 @@ describe('Money', () => {
   });
 
   describe('isZero', () => {
-    it('retorna true solo para monto cero', () => {
+    it('returns true only for zero amount', () => {
       // Arrange
       const m = Money.of(0);
       // Act & Assert
       expect(m.isZero()).toBe(true);
     });
 
-    it('retorna false para monto mayor a cero', () => {
+    it('returns false for amount greater than zero', () => {
       // Arrange
       const m = Money.of(1);
       // Act & Assert

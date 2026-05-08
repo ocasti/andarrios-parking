@@ -1,55 +1,55 @@
 'use client';
 import { useEffect } from 'react';
-import { AptoCod } from '@/src/domain/value-objects/AptoCod';
-import { TORRES, PISOS_POR_TORRE, APTOS_POR_PISO } from '@/src/domain/constants';
+import { ApartmentCode } from '@/src/domain/value-objects/ApartmentCode';
+import { TOWERS, FLOORS_PER_TOWER, UNITS_PER_FLOOR } from '@/src/domain/constants';
 
 interface Props {
-  torre: string;
-  apto: string; // código completo seleccionado, e.g. "T08-304"
-  onChange: (torre: string, cod: string) => void;
+  tower: string;
+  apt: string; // full selected code, e.g. "T08-304"
+  onChange: (tower: string, aptCode: string) => void;
 }
 
-export default function AptoSelector({ torre, apto, onChange }: Props) {
-  const opciones: Array<{ value: string; label: string }> = [];
-  if (torre) {
-    const t = parseInt(torre, 10);
-    for (let piso = 1; piso <= PISOS_POR_TORRE; piso++) {
-      for (let a = 1; a <= APTOS_POR_PISO; a++) {
-        const cod = AptoCod.fromParts(t, piso, a).toString();
-        opciones.push({ value: cod, label: `${piso}0${a}  (${cod})` });
+export default function AptoSelector({ tower, apt, onChange }: Props) {
+  const options: Array<{ value: string; label: string }> = [];
+  if (tower) {
+    const t = parseInt(tower, 10);
+    for (let floor = 1; floor <= FLOORS_PER_TOWER; floor++) {
+      for (let unit = 1; unit <= UNITS_PER_FLOOR; unit++) {
+        const aptCode = ApartmentCode.fromParts(t, floor, unit).toString();
+        options.push({ value: aptCode, label: `${floor}0${unit}  (${aptCode})` });
       }
     }
   }
 
-  // Si cambia la torre y la opción ya no es válida, limpia el apto
+  // If tower changes and the current apt code is no longer valid, clear the apt
   useEffect(() => {
-    if (apto && torre && !apto.startsWith(`T${String(torre).padStart(2, '0')}-`)) {
-      onChange(torre, '');
+    if (apt && tower && !apt.startsWith(`T${String(tower).padStart(2, '0')}-`)) {
+      onChange(tower, '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [torre]);
+  }, [tower]);
 
   return (
     <>
       <div className="fld">
-        <label htmlFor="apto-torre">Torre</label>
-        <select id="apto-torre" value={torre} onChange={(e) => onChange(e.target.value, '')}>
-          <option value="">Selecciona</option>
-          {Array.from({ length: TORRES }, (_, i) => i + 1).map((n) => (
+        <label htmlFor="apto-torre">Tower</label>
+        <select id="apto-torre" value={tower} onChange={(e) => onChange(e.target.value, '')}>
+          <option value="">Select</option>
+          {Array.from({ length: TOWERS }, (_, i) => i + 1).map((n) => (
             <option key={n}>{n}</option>
           ))}
         </select>
       </div>
       <div className="fld">
-        <label htmlFor="apto-sel">Apartamento</label>
+        <label htmlFor="apto-sel">Apartment</label>
         <select
           id="apto-sel"
-          value={apto}
-          onChange={(e) => onChange(torre, e.target.value)}
-          disabled={!torre}
+          value={apt}
+          onChange={(e) => onChange(tower, e.target.value)}
+          disabled={!tower}
         >
-          <option value="">— Selecciona apartamento —</option>
-          {opciones.map((o) => (
+          <option value="">— Select apartment —</option>
+          {options.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
@@ -57,8 +57,8 @@ export default function AptoSelector({ torre, apto, onChange }: Props) {
         </select>
       </div>
       <div className="fld">
-        <label htmlFor="apto-cod">Código apto</label>
-        <input id="apto-cod" type="text" readOnly value={apto || ''} placeholder="T00-000" />
+        <label htmlFor="apto-cod">Apt code</label>
+        <input id="apto-cod" type="text" readOnly value={apt || ''} placeholder="T00-000" />
       </div>
     </>
   );

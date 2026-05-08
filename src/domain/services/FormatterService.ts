@@ -1,48 +1,48 @@
 /**
  * FormatterService
- * Funciones de formateo para presentación de datos del dominio.
- * Zona horaria Colombia (America/Bogota, UTC-5).
+ * Formatting functions for domain data presentation.
+ * Timezone: Colombia (America/Bogota, UTC-5).
  */
 
-import { ZONA_HORARIA } from '../constants';
+import { TIMEZONE } from '../constants';
 
 /**
- * Formatea un número como pesos colombianos: '$1.500'
+ * Formats a number as Colombian pesos: '$1.500'
  */
 export function formatCOP(n: number): string {
   return '$' + Math.round(n).toLocaleString('es-CO');
 }
 
 /**
- * Formatea un ISO string como HH:mm en hora Colombia.
+ * Formats an ISO string as HH:mm in Colombia time.
  */
-export function formatHora(iso: string | number | Date): string {
+export function formatTime(iso: string | number | Date): string {
   return new Date(iso).toLocaleTimeString('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: ZONA_HORARIA,
+    timeZone: TIMEZONE,
     hour12: false,
   });
 }
 
 /**
- * Formatea un ISO string como dd/mm/yyyy en Colombia.
+ * Formats an ISO string as dd/mm/yyyy in Colombia.
  */
-export function formatFecha(iso: string | number | Date): string {
+export function formatDate(iso: string | number | Date): string {
   return new Date(iso).toLocaleDateString('es-CO', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    timeZone: ZONA_HORARIA,
+    timeZone: TIMEZONE,
   });
 }
 
 /**
- * Devuelve la fecha en Colombia como YYYY-MM-DD.
+ * Returns the date in Colombia as YYYY-MM-DD.
  */
-export function colDateStr(d: string | number | Date): string {
+export function colombiaDateStr(d: string | number | Date): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: ZONA_HORARIA,
+    timeZone: TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -50,22 +50,22 @@ export function colDateStr(d: string | number | Date): string {
 }
 
 /**
- * Devuelve un Date que representa medianoche (00:00:00) en Colombia
- * para el día de la fecha dada.
+ * Returns a Date representing midnight (00:00:00) in Colombia
+ * for the given date.
  */
-export function colStartOfDay(d: string | number | Date): Date {
-  const ymd = colDateStr(d);
-  // medianoche Colombia = ymd + T00:00:00 en America/Bogota
-  // America/Bogota es UTC-5, así que "2026-05-08T00:00:00-05:00" = "2026-05-08T05:00:00Z"
+export function colombiaStartOfDay(d: string | number | Date): Date {
+  const ymd = colombiaDateStr(d);
+  // Colombia midnight = ymd + T00:00:00 in America/Bogota
+  // America/Bogota is UTC-5, so "2026-05-08T00:00:00-05:00" = "2026-05-08T05:00:00Z"
   return new Date(`${ymd}T00:00:00-05:00`);
 }
 
 /**
- * Devuelve un Date que representa el primer día del mes de la fecha dada,
- * a medianoche en Colombia.
+ * Returns a Date representing the first day of the month of the given date,
+ * at midnight in Colombia.
  */
-export function colStartOfMonth(d: string | number | Date): Date {
-  const ymd = colDateStr(d);         // "YYYY-MM-DD"
+export function colombiaStartOfMonth(d: string | number | Date): Date {
+  const ymd = colombiaDateStr(d);         // "YYYY-MM-DD"
   const firstDay = ymd.slice(0, 8) + '01'; // "YYYY-MM-01"
   return new Date(`${firstDay}T00:00:00-05:00`);
 }

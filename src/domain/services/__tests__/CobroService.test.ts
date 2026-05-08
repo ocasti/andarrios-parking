@@ -1,119 +1,119 @@
 import { describe, it, expect } from 'vitest';
-import { calcularCobro } from '../CobroService';
+import { calculateCharge } from '../CobroService';
 
-describe('calcularCobro', () => {
-  it('cobra 0 cuando el tiempo es menor que horas gratis con cortesía', () => {
+describe('calculateCharge', () => {
+  it('charges 0 when time is less than free hours with courtesy', () => {
     // Arrange
-    const params = { horas: 1.5, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+    const params = { hours: 1.5, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(0);
+    expect(result.chargedHours).toBe(0);
     expect(result.base).toBe(0);
     expect(result.iva).toBe(0);
     expect(result.total).toBe(0);
   });
 
-  it('cobra 0 cuando el tiempo es exactamente igual a horas gratis', () => {
+  it('charges 0 when time equals free hours exactly', () => {
     // Arrange
-    const params = { horas: 2, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+    const params = { hours: 2, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(0);
+    expect(result.chargedHours).toBe(0);
     expect(result.base).toBe(0);
     expect(result.total).toBe(0);
   });
 
-  it('cobra 1 hora cuando supera por fracción las horas gratis (ceil)', () => {
-    // Arrange — 2.1h con 2h gratis → 0.1h cobrada → ceil = 1
-    const params = { horas: 2.1, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+  it('charges 1 hour when free hours exceeded by a fraction (ceil)', () => {
+    // Arrange — 2.1h with 2 free → 0.1h charged → ceil = 1
+    const params = { hours: 2.1, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(1);
+    expect(result.chargedHours).toBe(1);
     expect(result.base).toBe(1000);
   });
 
-  it('cobra hora completa adicional aunque solo pasó 0.1h extra', () => {
-    // Arrange — mismo caso que el anterior, verificando que ceil funciona
-    const params = { horas: 3.1, tarifaHora: 500, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+  it('charges full additional hour even if only 0.1h extra elapsed', () => {
+    // Arrange — same case as above, verifying ceil works
+    const params = { hours: 3.1, hourlyRate: 500, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
     // 3.1 - 2 = 1.1 → ceil = 2
-    expect(result.horasCobradas).toBe(2);
+    expect(result.chargedHours).toBe(2);
     expect(result.base).toBe(1000);
   });
 
-  it('cobra desde la primera hora cuando no aplica cortesía', () => {
-    // Arrange — 1h sin cortesía → cobra 1h (horasGratis ignoradas)
-    const params = { horas: 1.0, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: false };
+  it('charges from first hour when courtesy does not apply', () => {
+    // Arrange — 1h without courtesy → charges 1h (freeHours ignored)
+    const params = { hours: 1.0, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: false };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(1);
+    expect(result.chargedHours).toBe(1);
     expect(result.base).toBe(1000);
   });
 
-  it('cobra correctamente con 3 horas y tarifa de 1000', () => {
-    // Arrange — 3h con 2h gratis → 1h cobrada a $1000
-    const params = { horas: 3, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+  it('charges correctly with 3 hours at rate of 1000', () => {
+    // Arrange — 3h with 2 free → 1h charged at $1000
+    const params = { hours: 3, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(1);
+    expect(result.chargedHours).toBe(1);
     expect(result.base).toBe(1000);
   });
 
-  it('calcula IVA correctamente sobre la base', () => {
-    // Arrange — 3h con 2h gratis, tarifa=2000 → base=2000, iva=Math.round(2000*19/119)
-    const params = { horas: 3, tarifaHora: 2000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+  it('calculates tax correctly on the base', () => {
+    // Arrange — 3h with 2 free, rate=2000 → base=2000, iva=Math.round(2000*19/119)
+    const params = { hours: 3, hourlyRate: 2000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(1);
+    expect(result.chargedHours).toBe(1);
     expect(result.base).toBe(2000);
     expect(result.iva).toBe(Math.round(2000 * 19 / 119));
     expect(result.total).toBe(2000);
   });
 
-  it('retorna horasGratis=0 cuando cortesiaAplica=false', () => {
+  it('returns freeHours=0 when courtesyApplies=false', () => {
     // Arrange
-    const params = { horas: 3, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: false };
+    const params = { hours: 3, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: false };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasGratis).toBe(0);
+    expect(result.freeHours).toBe(0);
   });
 
-  it('retorna horasGratis correcto cuando cortesiaAplica=true', () => {
+  it('returns correct freeHours when courtesyApplies=true', () => {
     // Arrange
-    const params = { horas: 3, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+    const params = { hours: 3, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasGratis).toBe(2);
+    expect(result.freeHours).toBe(2);
   });
 
-  it('maneja 0 horas sin error', () => {
+  it('handles 0 hours without error', () => {
     // Arrange
-    const params = { horas: 0, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+    const params = { hours: 0, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(0);
+    expect(result.chargedHours).toBe(0);
     expect(result.base).toBe(0);
     expect(result.total).toBe(0);
   });
 
-  it('maneja horas negativas como 0 cobrado', () => {
+  it('handles negative hours as 0 charged', () => {
     // Arrange
-    const params = { horas: -1, tarifaHora: 1000, horasGratis: 2, porcentajeIva: 19, cortesiaAplica: true };
+    const params = { hours: -1, hourlyRate: 1000, freeHours: 2, taxRate: 19, courtesyApplies: true };
     // Act
-    const result = calcularCobro(params);
+    const result = calculateCharge(params);
     // Assert
-    expect(result.horasCobradas).toBe(0);
+    expect(result.chargedHours).toBe(0);
     expect(result.base).toBe(0);
     expect(result.total).toBe(0);
   });

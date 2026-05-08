@@ -13,7 +13,7 @@ export default function RequireAdmin({ children }: { children: React.ReactNode }
     }
   }, [user, isAdmin, loading, router]);
 
-  if (loading) return <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--ink3)' }}>Verificando acceso…</p>;
-  if (!user || !isAdmin) return <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--ink3)' }}>Redirigiendo…</p>;
+  if (loading) return <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--ink3)' }}>Verifying access…</p>;
+  if (!user || !isAdmin) return <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--ink3)' }}>Redirecting…</p>;
   return <>{children}</>;
 }

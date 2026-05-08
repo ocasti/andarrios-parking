@@ -1,36 +1,36 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatCOP,
-  formatHora,
-  formatFecha,
-  colDateStr,
-  colStartOfDay,
-  colStartOfMonth,
+  formatTime,
+  formatDate,
+  colombiaDateStr,
+  colombiaStartOfDay,
+  colombiaStartOfMonth,
 } from '../FormatterService';
 
 describe('formatCOP', () => {
-  it("formatea 1500 como '$1.500'", () => {
+  it("formats 1500 as '$1.500'", () => {
     // Arrange / Act
     const result = formatCOP(1500);
     // Assert
     expect(result).toBe('$1.500');
   });
 
-  it("formatea 0 como '$0'", () => {
+  it("formats 0 as '$0'", () => {
     // Arrange / Act
     const result = formatCOP(0);
     // Assert
     expect(result).toBe('$0');
   });
 
-  it('redondea decimales', () => {
+  it('rounds decimals', () => {
     // Arrange / Act
     const result = formatCOP(1500.7);
     // Assert — Math.round(1500.7) = 1501 → '$1.501'
     expect(result).toBe('$1.501');
   });
 
-  it('formatea número grande correctamente', () => {
+  it('formats large number correctly', () => {
     // Arrange / Act
     const result = formatCOP(1000000);
     // Assert
@@ -38,55 +38,55 @@ describe('formatCOP', () => {
   });
 });
 
-describe('formatHora', () => {
-  it('retorna HH:mm para ISO string conocido', () => {
-    // Arrange — 2026-05-08T14:30:00Z = 09:30 en Bogotá (UTC-5)
+describe('formatTime', () => {
+  it('returns HH:mm for a known ISO string', () => {
+    // Arrange — 2026-05-08T14:30:00Z = 09:30 in Bogotá (UTC-5)
     const iso = '2026-05-08T14:30:00Z';
     // Act
-    const result = formatHora(iso);
+    const result = formatTime(iso);
     // Assert
     expect(result).toBe('09:30');
   });
 
-  it('aplica zona Colombia', () => {
-    // Arrange — medianoche UTC = 19:00 del día anterior en Bogotá
+  it('applies Colombia timezone', () => {
+    // Arrange — midnight UTC = 19:00 of the previous day in Bogotá
     const iso = '2026-05-09T00:00:00Z';
     // Act
-    const result = formatHora(iso);
+    const result = formatTime(iso);
     // Assert
     expect(result).toBe('19:00');
   });
 });
 
-describe('formatFecha', () => {
-  it('retorna dd/mm/yyyy para ISO string conocido', () => {
+describe('formatDate', () => {
+  it('returns dd/mm/yyyy for a known ISO string', () => {
     // Arrange
     const iso = '2026-05-08T10:00:00Z';
     // Act
-    const result = formatFecha(iso);
+    const result = formatDate(iso);
     // Assert
     expect(result).toBe('08/05/2026');
   });
 });
 
-describe('colDateStr', () => {
-  it('retorna YYYY-MM-DD', () => {
+describe('colombiaDateStr', () => {
+  it('returns YYYY-MM-DD', () => {
     // Arrange / Act
-    const result = colDateStr(new Date('2026-05-08T10:00:00Z'));
+    const result = colombiaDateStr(new Date('2026-05-08T10:00:00Z'));
     // Assert
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result).toBe('2026-05-08');
   });
 
-  it('acepta string ISO, Date y timestamp', () => {
+  it('accepts ISO string, Date and timestamp', () => {
     // Arrange
     const isoStr = '2026-05-08T10:00:00Z';
     const date = new Date(isoStr);
     const ts = date.getTime();
     // Act
-    const fromString = colDateStr(isoStr);
-    const fromDate = colDateStr(date);
-    const fromTs = colDateStr(ts);
+    const fromString = colombiaDateStr(isoStr);
+    const fromDate = colombiaDateStr(date);
+    const fromTs = colombiaDateStr(ts);
     // Assert
     expect(fromString).toBe('2026-05-08');
     expect(fromDate).toBe('2026-05-08');
@@ -94,24 +94,24 @@ describe('colDateStr', () => {
   });
 });
 
-describe('colStartOfDay', () => {
-  it('retorna medianoche en Colombia', () => {
-    // Arrange — 2026-05-08 en Bogotá
+describe('colombiaStartOfDay', () => {
+  it('returns midnight in Colombia', () => {
+    // Arrange — 2026-05-08 in Bogotá
     const input = '2026-05-08T10:00:00Z';
     // Act
-    const result = colStartOfDay(input);
-    // Assert — medianoche Bogotá 2026-05-08 = 05:00 UTC
+    const result = colombiaStartOfDay(input);
+    // Assert — midnight Bogotá 2026-05-08 = 05:00 UTC
     expect(result.getTime()).toBe(new Date('2026-05-08T05:00:00Z').getTime());
   });
 });
 
-describe('colStartOfMonth', () => {
-  it('retorna el primer día del mes en Colombia a medianoche', () => {
+describe('colombiaStartOfMonth', () => {
+  it('returns first day of the month in Colombia at midnight', () => {
     // Arrange
     const input = '2026-05-15T10:00:00Z';
     // Act
-    const result = colStartOfMonth(input);
-    // Assert — primer día del mes mayo 2026 en Bogotá = 2026-05-01T00:00:00-05:00 = 2026-05-01T05:00:00Z
+    const result = colombiaStartOfMonth(input);
+    // Assert — first day of May 2026 in Bogotá = 2026-05-01T00:00:00-05:00 = 2026-05-01T05:00:00Z
     expect(result.getTime()).toBe(new Date('2026-05-01T05:00:00Z').getTime());
   });
 });

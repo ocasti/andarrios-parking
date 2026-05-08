@@ -26,7 +26,7 @@ describe('useSync', () => {
     (initSync as Mock).mockResolvedValue(undefined);
   });
 
-  it('retorna estado inicial online con pending 0', () => {
+  it('returns initial online state with pending 0', () => {
     // Act
     const { result } = renderHook(() => useSync());
 
@@ -35,28 +35,28 @@ describe('useSync', () => {
     expect(result.current.pending).toBe(0);
   });
 
-  it('refleja cambios del subscribeStatus', () => {
-    // Arrange: capturamos el callback para dispararlo manualmente
+  it('reflects subscribeStatus changes', () => {
+    // Arrange: capture the callback to fire it manually
     let capturedCb: ((s: string, p: number) => void) | null = null;
     (subscribeStatus as Mock).mockImplementation((cb: (s: string, p: number) => void) => {
       capturedCb = cb;
-      cb('online', 0); // estado inicial
+      cb('online', 0); // initial state
       return () => {};
     });
 
     // Act
     const { result } = renderHook(() => useSync());
 
-    // Verificamos estado inicial
+    // Verify initial state
     expect(result.current.status).toBe('online');
     expect(result.current.pending).toBe(0);
 
-    // Disparamos cambio de estado a syncing con 3 pendientes
+    // Fire state change to syncing with 3 pending
     act(() => {
       capturedCb?.('syncing', 3);
     });
 
-    // Assert: el hook refleja el nuevo estado
+    // Assert: the hook reflects the new state
     expect(result.current.status).toBe('syncing');
     expect(result.current.pending).toBe(3);
   });

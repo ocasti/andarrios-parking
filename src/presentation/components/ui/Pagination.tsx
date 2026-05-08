@@ -26,10 +26,10 @@ export default function Pagination({
     <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-[var(--bd)] text-xs text-[var(--ink3)]">
       <div>
         {loading
-          ? 'Cargando…'
+          ? 'Loading…'
           : total === 0
-          ? 'Sin resultados'
-          : `${from}–${to} de ${total}`}
+          ? 'No results'
+          : `${from}–${to} of ${total}`}
       </div>
       <div className="flex gap-1.5">
         <button
@@ -37,14 +37,14 @@ export default function Pagination({
           disabled={page <= 1 || loading}
           onClick={() => onChange(1)}
         >
-          « Inicio
+          « First
         </button>
         <button
           className="btn bo xs"
           disabled={page <= 1 || loading}
           onClick={() => onChange(page - 1)}
         >
-          ‹ Anterior
+          ‹ Previous
         </button>
         <span className="px-2.5 py-1 font-semibold text-[var(--leaf)]">
           {page} / {totalPages}
@@ -54,14 +54,14 @@ export default function Pagination({
           disabled={page >= totalPages || loading}
           onClick={() => onChange(page + 1)}
         >
-          Siguiente ›
+          Next ›
         </button>
         <button
           className="btn bo xs"
           disabled={page >= totalPages || loading}
           onClick={() => onChange(totalPages)}
         >
-          Fin »
+          Last »
         </button>
       </div>
     </div>

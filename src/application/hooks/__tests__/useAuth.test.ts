@@ -42,8 +42,8 @@ describe('useAuth', () => {
     });
   });
 
-  it('inicia con loading true', async () => {
-    // Arrange: bloqueamos getSession para que no resuelva durante este test
+  it('starts with loading true', async () => {
+    // Arrange: block getSession so it does not resolve during this test
     (getSupabase as Mock).mockReturnValue({
       auth: {
         getSession: vi.fn(() => new Promise<{ data: { session: null } }>(() => {})), // never resolves
@@ -57,38 +57,38 @@ describe('useAuth', () => {
       })),
     });
 
-    // Act: renderizar — el refresh asíncrono no completará porque getSession no resuelve
+    // Act: render — the async refresh will not complete because getSession never resolves
     const { result } = renderHook(() => useAuth());
 
-    // Assert: el estado inicial tiene loading: true
+    // Assert: initial state has loading: true
     expect(result.current.loading).toBe(true);
   });
 
-  it('loading false después de refresh', async () => {
+  it('loading false after refresh', async () => {
     // Act
     const { result } = renderHook(() => useAuth());
 
-    // Assert: esperar a que el refresh asíncrono complete
+    // Assert: wait for the async refresh to complete
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
   });
 
-  it('user null cuando no hay sesión', async () => {
-    // Arrange: getSession devuelve sesión vacía (ya configurado en beforeEach)
+  it('user null when there is no session', async () => {
+    // Arrange: getSession returns empty session (already set up in beforeEach)
 
     // Act
     const { result } = renderHook(() => useAuth());
 
-    // Assert: esperar que el refresh complete y user sea null
+    // Assert: wait for refresh to complete and user to be null
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
     expect(result.current.user).toBeNull();
   });
 
-  it('isAdmin false cuando no hay sesión', async () => {
-    // Arrange: sin sesión, isAdmin debe ser false
+  it('isAdmin false when there is no session', async () => {
+    // Arrange: no session, isAdmin must be false
 
     // Act
     const { result } = renderHook(() => useAuth());
@@ -100,8 +100,8 @@ describe('useAuth', () => {
     expect(result.current.isAdmin).toBe(false);
   });
 
-  it('isAdmin true cuando el usuario existe en admin_profiles', async () => {
-    // Arrange: getSession retorna un usuario y maybeSingle retorna perfil admin
+  it('isAdmin true when user exists in admin_profiles', async () => {
+    // Arrange: getSession returns a user and maybeSingle returns admin profile
     (getSupabase as Mock).mockReturnValue({
       auth: {
         getSession: vi.fn(async () => ({
@@ -128,8 +128,8 @@ describe('useAuth', () => {
     expect(result.current.user).toEqual({ id: 'user-1', email: 'admin@test.com' });
   });
 
-  it('isAdmin false cuando el usuario no está en admin_profiles', async () => {
-    // Arrange: getSession retorna un usuario pero maybeSingle no encuentra perfil
+  it('isAdmin false when user is not in admin_profiles', async () => {
+    // Arrange: getSession returns a user but maybeSingle finds no profile
     (getSupabase as Mock).mockReturnValue({
       auth: {
         getSession: vi.fn(async () => ({
@@ -156,7 +156,7 @@ describe('useAuth', () => {
     expect(result.current.user).toEqual({ id: 'user-2', email: 'nonadmin@test.com' });
   });
 
-  it('logout llama a signOut y limpia el estado', async () => {
+  it('logout calls signOut and clears state', async () => {
     const signOutMock = vi.fn(async () => ({}));
 
     (getSupabase as Mock).mockReturnValue({
@@ -176,19 +176,19 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    // Llamar logout
+    // Call logout
     await act(async () => {
       const { logout } = await import('../useAuth');
       await logout();
     });
 
-    // Assert: signOut fue llamado
+    // Assert: signOut was called
     expect(signOutMock).toHaveBeenCalledTimes(1);
   });
 
-  it('init no ejecuta refresh dos veces cuando ya está inicializado (singleton guard)', async () => {
-    // Arrange: montar dos hooks en la misma prueba sin reset entre ellos
-    // El segundo renderHook llama a init() que debe hacer early-return
+  it('init does not execute refresh twice when already initialized (singleton guard)', async () => {
+    // Arrange: mount two hooks in the same test without reset between them
+    // The second renderHook calls init() which must early-return
     const getSessionMock = vi.fn(async () => ({ data: { session: null } }));
     (getSupabase as Mock).mockReturnValue({
       auth: {
@@ -203,21 +203,21 @@ describe('useAuth', () => {
       })),
     });
 
-    // Primer hook → init() ejecuta, _initialized=true
+    // First hook → init() executes, _initialized=true
     const { result: r1 } = renderHook(() => useAuth());
     await waitFor(() => expect(r1.current.loading).toBe(false));
     const firstCallCount = getSessionMock.mock.calls.length;
 
-    // Segundo hook → init() debe retornar temprano (singleton guard)
+    // Second hook → init() must return early (singleton guard)
     const { result: r2 } = renderHook(() => useAuth());
     await waitFor(() => expect(r2.current.loading).toBe(false));
 
-    // El número de llamadas no debería aumentar (init fue early-return)
+    // The call count should not increase (init returned early)
     expect(getSessionMock.mock.calls.length).toBe(firstCallCount);
   });
 
-  it('isAdmin false cuando checkAdmin lanza una excepción', async () => {
-    // Arrange: getSession retorna usuario pero maybeSingle lanza error
+  it('isAdmin false when checkAdmin throws an exception', async () => {
+    // Arrange: getSession returns user but maybeSingle throws error
     (getSupabase as Mock).mockReturnValue({
       auth: {
         getSession: vi.fn(async () => ({
@@ -236,13 +236,13 @@ describe('useAuth', () => {
     // Act
     const { result } = renderHook(() => useAuth());
 
-    // Assert: el catch devuelve false, no debe romperse el hook
+    // Assert: the catch returns false, the hook must not break
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.isAdmin).toBe(false);
     expect(result.current.user).toEqual({ id: 'user-err', email: 'err@test.com' });
   });
 
-  it('onAuthStateChange dispara un refresh cuando cambia el estado de auth', async () => {
+  it('onAuthStateChange triggers a refresh when auth state changes', async () => {
     let authChangeCallback: (() => void) | undefined;
 
     (getSupabase as Mock).mockReturnValue({
@@ -265,7 +265,7 @@ describe('useAuth', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    // Simular cambio de auth: ahora hay un usuario
+    // Simulate auth change: now there is a user
     (getSupabase as Mock).mockReturnValue({
       auth: {
         getSession: vi.fn(async () => ({
@@ -281,7 +281,7 @@ describe('useAuth', () => {
       })),
     });
 
-    // Disparar el callback de onAuthStateChange
+    // Fire the onAuthStateChange callback
     await act(async () => {
       authChangeCallback?.();
     });

@@ -1,7 +1,7 @@
 /**
  * Value Object: Money
- * Monto en pesos colombianos (COP). Siempre entero, sin decimales.
- * Inmutable, se valida en construcción.
+ * Amount in Colombian pesos (COP). Always an integer, no decimals.
+ * Immutable, validated on construction.
  */
 export class Money {
   private readonly _amount: number;
@@ -11,61 +11,61 @@ export class Money {
   }
 
   /**
-   * Crea un monto a partir de un número.
-   * Lanza Error si el valor es negativo o NaN.
+   * Creates an amount from a number.
+   * Throws Error if the value is negative or NaN.
    */
   static of(amount: number): Money {
     if (isNaN(amount)) {
-      throw new Error('Money inválido: el monto no puede ser NaN');
+      throw new Error('invalid Money: amount cannot be NaN');
     }
     if (amount < 0) {
-      throw new Error(`Money inválido: el monto no puede ser negativo (${amount})`);
+      throw new Error(`invalid Money: amount cannot be negative (${amount})`);
     }
     return new Money(amount);
   }
 
-  /** Monto de cero pesos. */
+  /** Zero amount. */
   static zero(): Money {
     return new Money(0);
   }
 
-  /** Monto como entero (decimales ya redondeados en construcción). */
+  /** Amount as an integer (decimals already rounded on construction). */
   get amount(): number {
     return this._amount;
   }
 
-  /** Suma dos montos y retorna uno nuevo. */
+  /** Adds two amounts and returns a new one. */
   add(other: Money): Money {
     return new Money(this._amount + other._amount);
   }
 
   /**
-   * Multiplica el monto por un factor.
-   * Lanza Error si el factor es negativo.
+   * Multiplies the amount by a factor.
+   * Throws Error if the factor is negative.
    */
   multiply(factor: number): Money {
     if (factor < 0) {
-      throw new Error(`factor inválido: no puede ser negativo (${factor})`);
+      throw new Error(`invalid factor: cannot be negative (${factor})`);
     }
     return new Money(Math.round(this._amount * factor));
   }
 
   /**
-   * Resta otro monto.
-   * Lanza Error si el resultado sería negativo.
+   * Subtracts another amount.
+   * Throws Error if the result would be negative.
    */
   subtract(other: Money): Money {
     const result = this._amount - other._amount;
     if (result < 0) {
       throw new Error(
-        `resultado negativo: no se puede restar ${other._amount} de ${this._amount}`,
+        `negative result: cannot subtract ${other._amount} from ${this._amount}`,
       );
     }
     return new Money(result);
   }
 
   /**
-   * Formatea el monto como moneda colombiana, ej: "$1.500".
+   * Formats the amount as Colombian currency, e.g.: "$1.500".
    */
   format(): string {
     return new Intl.NumberFormat('es-CO', {

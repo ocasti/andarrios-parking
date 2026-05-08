@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 
 // Tipos de fila en DB (snake_case para compatibilidad con Supabase)
-export interface ResidenteRow {
+export interface ResidentRow {
   id: string;
   cod: string;
   torre: number;
@@ -17,7 +17,7 @@ export interface ResidenteRow {
   deleted_at: string | null;
 }
 
-export interface VisitanteRow {
+export interface VisitorRow {
   id: string;
   cod: string;
   placa: string;
@@ -35,7 +35,7 @@ export interface VisitanteRow {
   updated_at: string;
 }
 
-export interface MensualidadRow {
+export interface MonthlyFeeRow {
   id: string;
   residente_id: string;
   mes_key: string;
@@ -46,7 +46,7 @@ export interface MensualidadRow {
   updated_at: string;
 }
 
-export interface TarifaRow {
+export interface PricingRow {
   id: number;
   carro_mes: number;
   moto_mes: number;
@@ -58,14 +58,14 @@ export interface TarifaRow {
   updated_at: string;
 }
 
-export interface ActividadRow {
+export interface ActivityLogRow {
   id: string;
   msg: string;
   ts: string;
   tipo: string;
 }
 
-export interface CierreCajaRow {
+export interface DailyCloseRow {
   id: string;
   fecha: string;
   fecha_str: string;
@@ -77,7 +77,7 @@ export interface CierreCajaRow {
   total: number;
 }
 
-export interface PagoMensualidadRow {
+export interface MonthlyPaymentRow {
   id: string;
   residente_id: string;
   placa: string;
@@ -98,13 +98,13 @@ export interface QueueRow {
 }
 
 export class AndarriosDB extends Dexie {
-  residentes!: Table<ResidenteRow, string>;
-  visitantes!: Table<VisitanteRow, string>;
-  mensualidades!: Table<MensualidadRow, string>;
-  pagos!: Table<PagoMensualidadRow, string>;
-  cierres!: Table<CierreCajaRow, string>;
-  actividad!: Table<ActividadRow, string>;
-  tarifas!: Table<TarifaRow, number>;
+  residentes!: Table<ResidentRow, string>;
+  visitantes!: Table<VisitorRow, string>;
+  mensualidades!: Table<MonthlyFeeRow, string>;
+  pagos!: Table<MonthlyPaymentRow, string>;
+  cierres!: Table<DailyCloseRow, string>;
+  actividad!: Table<ActivityLogRow, string>;
+  tarifas!: Table<PricingRow, number>;
   queue!: Table<QueueRow, number>;
   meta!: Table<{ key: string; value: unknown }, string>;
 

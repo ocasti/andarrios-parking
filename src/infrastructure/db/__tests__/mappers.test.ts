@@ -1,35 +1,35 @@
 import { describe, it, expect } from 'vitest';
 import {
-  residenteFromRow,
-  residenteToRow,
-  visitanteFromRow,
-  visitanteToRow,
-  mensualidadFromRow,
-  mensualidadToRow,
-  tarifaFromRow,
-  tarifaToRow,
-  actividadFromRow,
-  actividadToRow,
-  cierreCajaFromRow,
-  cierreCajaToRow,
-  pagoMensualidadFromRow,
-  pagoMensualidadToRow,
+  residentFromRow,
+  residentToRow,
+  visitorFromRow,
+  visitorToRow,
+  monthlyFeeFromRow,
+  monthlyFeeToRow,
+  pricingFromRow,
+  pricingToRow,
+  activityLogFromRow,
+  activityLogToRow,
+  dailyCloseFromRow,
+  dailyCloseToRow,
+  monthlyPaymentFromRow,
+  monthlyPaymentToRow,
 } from '../mappers';
 import type {
-  ResidenteRow,
-  VisitanteRow,
-  MensualidadRow,
-  TarifaRow,
-  ActividadRow,
-  CierreCajaRow,
-  PagoMensualidadRow,
+  ResidentRow,
+  VisitorRow,
+  MonthlyFeeRow,
+  PricingRow,
+  ActivityLogRow,
+  DailyCloseRow,
+  MonthlyPaymentRow,
 } from '../AndarriosDB';
-import type { Residente, Visitante, Mensualidad, Tarifa, Actividad, CierreCaja, PagoMensualidad } from '../../../domain/entities';
+import type { Resident, Visitor, MonthlyFee, PricingConfig, ActivityLog, DailyClose, MonthlyPayment } from '../../../domain/entities';
 
-// ---- Residente ----
+// ---- Resident ----
 
-describe('residenteFromRow / residenteToRow', () => {
-  const row: ResidenteRow = {
+describe('residentFromRow / residentToRow', () => {
+  const row: ResidentRow = {
     id: 'r1',
     cod: 'T01-101',
     torre: 1,
@@ -45,48 +45,55 @@ describe('residenteFromRow / residenteToRow', () => {
     deleted_at: null,
   };
 
-  it('fromRow mapea todos los campos snake_case a camelCase correctamente', () => {
-    const entity = residenteFromRow(row);
+  it('fromRow maps all fields from DB row to domain entity correctly', () => {
+    const entity = residentFromRow(row);
     expect(entity.id).toBe(row.id);
-    expect(entity.cod).toBe(row.cod);
-    expect(entity.torre).toBe(row.torre);
-    expect(entity.piso).toBe(row.piso);
-    expect(entity.apto).toBe(row.apto);
-    expect(entity.placa).toBe(row.placa);
-    expect(entity.tipo).toBe(row.tipo);
-    expect(entity.nombre).toBe(row.nombre);
-    expect(entity.cel).toBe(row.cel);
-    expect(entity.fechaRegistro).toBe(row.fecha_registro);
+    expect(entity.aptCode).toBe(row.cod);
+    expect(entity.tower).toBe(row.torre);
+    expect(entity.floor).toBe(row.piso);
+    expect(entity.unit).toBe(row.apto);
+    expect(entity.plate).toBe(row.placa);
+    expect(entity.vehicleType).toBe('car');
+    expect(entity.name).toBe(row.nombre);
+    expect(entity.phone).toBe(row.cel);
+    expect(entity.registrationDate).toBe(row.fecha_registro);
     expect(entity.createdAt).toBe(row.created_at);
     expect(entity.updatedAt).toBe(row.updated_at);
     expect(entity.deletedAt).toBe(row.deleted_at);
   });
 
-  it('toRow mapea todos los campos camelCase a snake_case correctamente', () => {
-    const entity = residenteFromRow(row);
-    const back = residenteToRow(entity);
-    expect(back.fecha_registro).toBe(entity.fechaRegistro);
+  it('toRow maps all domain entity fields back to DB row correctly', () => {
+    const entity = residentFromRow(row);
+    const back = residentToRow(entity);
+    expect(back.fecha_registro).toBe(entity.registrationDate);
     expect(back.created_at).toBe(entity.createdAt);
     expect(back.updated_at).toBe(entity.updatedAt);
     expect(back.deleted_at).toBe(entity.deletedAt);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(residenteToRow(residenteFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(residentToRow(residentFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    const rowWithNulls: ResidenteRow = { ...row, cel: null, deleted_at: '2024-06-01T00:00:00.000Z' };
-    const entity = residenteFromRow(rowWithNulls);
-    expect(entity.cel).toBeNull();
+  it('handles nullable fields correctly (null stays null)', () => {
+    const rowWithNulls: ResidentRow = { ...row, cel: null, deleted_at: '2024-06-01T00:00:00.000Z' };
+    const entity = residentFromRow(rowWithNulls);
+    expect(entity.phone).toBeNull();
     expect(entity.deletedAt).toBe('2024-06-01T00:00:00.000Z');
+  });
+
+  it('translates motorcycle vehicleType correctly', () => {
+    const motoRow: ResidentRow = { ...row, tipo: 'moto' };
+    const entity = residentFromRow(motoRow);
+    expect(entity.vehicleType).toBe('motorcycle');
+    expect(residentToRow(entity).tipo).toBe('moto');
   });
 });
 
-// ---- Visitante ----
+// ---- Visitor ----
 
-describe('visitanteFromRow / visitanteToRow', () => {
-  const row: VisitanteRow = {
+describe('visitorFromRow / visitorToRow', () => {
+  const row: VisitorRow = {
     id: 'vis-1',
     cod: 'T02-202',
     placa: 'XYZ789',
@@ -104,39 +111,39 @@ describe('visitanteFromRow / visitanteToRow', () => {
     updated_at: '2024-06-01T12:00:00.000Z',
   };
 
-  it('fromRow mapea todos los campos snake_case a camelCase correctamente', () => {
-    const entity = visitanteFromRow(row);
+  it('fromRow maps all fields from DB row to domain entity correctly', () => {
+    const entity = visitorFromRow(row);
     expect(entity.id).toBe(row.id);
-    expect(entity.cod).toBe(row.cod);
-    expect(entity.placa).toBe(row.placa);
-    expect(entity.tipo).toBe(row.tipo);
-    expect(entity.nombre).toBe(row.nombre);
-    expect(entity.tel).toBe(row.tel);
-    expect(entity.entrada).toBe(row.entrada);
-    expect(entity.salida).toBe(row.salida);
-    expect(entity.horas).toBe(row.horas);
-    expect(entity.base).toBe(row.base);
-    expect(entity.iva).toBe(row.iva);
+    expect(entity.aptCode).toBe(row.cod);
+    expect(entity.plate).toBe(row.placa);
+    expect(entity.vehicleType).toBe('motorcycle');
+    expect(entity.name).toBe(row.nombre);
+    expect(entity.phone).toBe(row.tel);
+    expect(entity.checkIn).toBe(row.entrada);
+    expect(entity.checkOut).toBe(row.salida);
+    expect(entity.hours).toBe(row.horas);
+    expect(entity.baseAmount).toBe(row.base);
+    expect(entity.tax).toBe(row.iva);
     expect(entity.total).toBe(row.total);
-    expect(entity.cortesiaAplica).toBe(row.cortesia_aplica);
+    expect(entity.courtesyApplies).toBe(row.cortesia_aplica);
     expect(entity.createdAt).toBe(row.created_at);
     expect(entity.updatedAt).toBe(row.updated_at);
   });
 
-  it('toRow mapea todos los campos camelCase a snake_case correctamente', () => {
-    const entity = visitanteFromRow(row);
-    const back = visitanteToRow(entity);
-    expect(back.cortesia_aplica).toBe(entity.cortesiaAplica);
+  it('toRow maps all domain entity fields back to DB row correctly', () => {
+    const entity = visitorFromRow(row);
+    const back = visitorToRow(entity);
+    expect(back.cortesia_aplica).toBe(entity.courtesyApplies);
     expect(back.created_at).toBe(entity.createdAt);
     expect(back.updated_at).toBe(entity.updatedAt);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(visitanteToRow(visitanteFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(visitorToRow(visitorFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    const rowWithNulls: VisitanteRow = {
+  it('handles nullable fields correctly (null stays null)', () => {
+    const rowWithNulls: VisitorRow = {
       ...row,
       tel: null,
       salida: null,
@@ -145,20 +152,20 @@ describe('visitanteFromRow / visitanteToRow', () => {
       iva: null,
       total: null,
     };
-    const entity = visitanteFromRow(rowWithNulls);
-    expect(entity.tel).toBeNull();
-    expect(entity.salida).toBeNull();
-    expect(entity.horas).toBeNull();
-    expect(entity.base).toBeNull();
-    expect(entity.iva).toBeNull();
+    const entity = visitorFromRow(rowWithNulls);
+    expect(entity.phone).toBeNull();
+    expect(entity.checkOut).toBeNull();
+    expect(entity.hours).toBeNull();
+    expect(entity.baseAmount).toBeNull();
+    expect(entity.tax).toBeNull();
     expect(entity.total).toBeNull();
   });
 });
 
-// ---- Mensualidad ----
+// ---- MonthlyFee ----
 
-describe('mensualidadFromRow / mensualidadToRow', () => {
-  const row: MensualidadRow = {
+describe('monthlyFeeFromRow / monthlyFeeToRow', () => {
+  const row: MonthlyFeeRow = {
     id: 'mens-1',
     residente_id: 'res-1',
     mes_key: '2024-06',
@@ -169,46 +176,53 @@ describe('mensualidadFromRow / mensualidadToRow', () => {
     updated_at: '2024-06-10T00:00:00.000Z',
   };
 
-  it('fromRow mapea todos los campos snake_case a camelCase correctamente', () => {
-    const entity = mensualidadFromRow(row);
+  it('fromRow maps all fields from DB row to domain entity correctly', () => {
+    const entity = monthlyFeeFromRow(row);
     expect(entity.id).toBe(row.id);
-    expect(entity.residenteId).toBe(row.residente_id);
-    expect(entity.mesKey).toBe(row.mes_key);
-    expect(entity.estado).toBe(row.estado);
-    expect(entity.fechaPago).toBe(row.fecha_pago);
-    expect(entity.monto).toBe(row.monto);
+    expect(entity.residentId).toBe(row.residente_id);
+    expect(entity.monthKey).toBe(row.mes_key);
+    expect(entity.status).toBe('paid');
+    expect(entity.paymentDate).toBe(row.fecha_pago);
+    expect(entity.amount).toBe(row.monto);
     expect(entity.createdAt).toBe(row.created_at);
     expect(entity.updatedAt).toBe(row.updated_at);
   });
 
-  it('toRow mapea todos los campos camelCase a snake_case correctamente', () => {
-    const entity = mensualidadFromRow(row);
-    const back = mensualidadToRow(entity);
-    expect(back.residente_id).toBe(entity.residenteId);
-    expect(back.mes_key).toBe(entity.mesKey);
-    expect(back.fecha_pago).toBe(entity.fechaPago);
+  it('toRow maps all domain entity fields back to DB row correctly', () => {
+    const entity = monthlyFeeFromRow(row);
+    const back = monthlyFeeToRow(entity);
+    expect(back.residente_id).toBe(entity.residentId);
+    expect(back.mes_key).toBe(entity.monthKey);
+    expect(back.fecha_pago).toBe(entity.paymentDate);
     expect(back.created_at).toBe(entity.createdAt);
     expect(back.updated_at).toBe(entity.updatedAt);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(mensualidadToRow(mensualidadFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(monthlyFeeToRow(monthlyFeeFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    const rowWithNulls: MensualidadRow = { ...row, fecha_pago: null, monto: null };
-    const entity = mensualidadFromRow(rowWithNulls);
-    expect(entity.fechaPago).toBeNull();
-    expect(entity.monto).toBeNull();
+  it('translates pending status correctly', () => {
+    const pendingRow: MonthlyFeeRow = { ...row, estado: 'pendiente' };
+    const entity = monthlyFeeFromRow(pendingRow);
+    expect(entity.status).toBe('pending');
+    expect(monthlyFeeToRow(entity).estado).toBe('pendiente');
+  });
+
+  it('handles nullable fields correctly (null stays null)', () => {
+    const rowWithNulls: MonthlyFeeRow = { ...row, fecha_pago: null, monto: null };
+    const entity = monthlyFeeFromRow(rowWithNulls);
+    expect(entity.paymentDate).toBeNull();
+    expect(entity.amount).toBeNull();
     // round-trip
-    expect(mensualidadToRow(entity)).toEqual(rowWithNulls);
+    expect(monthlyFeeToRow(entity)).toEqual(rowWithNulls);
   });
 });
 
-// ---- Tarifa ----
+// ---- PricingConfig ----
 
-describe('tarifaFromRow / tarifaToRow', () => {
-  const row: TarifaRow = {
+describe('pricingFromRow / pricingToRow', () => {
+  const row: PricingRow = {
     id: 1,
     carro_mes: 20000,
     moto_mes: 10000,
@@ -220,87 +234,85 @@ describe('tarifaFromRow / tarifaToRow', () => {
     updated_at: '2024-01-01T00:00:00.000Z',
   };
 
-  it('fromRow mapea todos los campos snake_case a camelCase correctamente', () => {
-    const entity = tarifaFromRow(row);
+  it('fromRow maps all fields from DB row to domain entity correctly', () => {
+    const entity = pricingFromRow(row);
     expect(entity.id).toBe(row.id);
-    expect(entity.carroMes).toBe(row.carro_mes);
-    expect(entity.motoMes).toBe(row.moto_mes);
-    expect(entity.visHora).toBe(row.vis_hora);
-    expect(entity.horasGratis).toBe(row.horas_gratis);
+    expect(entity.carMonthlyRate).toBe(row.carro_mes);
+    expect(entity.motorcycleMonthlyRate).toBe(row.moto_mes);
+    expect(entity.hourlyRate).toBe(row.vis_hora);
+    expect(entity.freeHours).toBe(row.horas_gratis);
     expect(entity.iva).toBe(row.iva);
-    expect(entity.capacidadVisitantes).toBe(row.capacidad_visitantes);
-    expect(entity.horasMinRecortesia).toBe(row.horas_min_recortesia);
+    expect(entity.visitorCapacity).toBe(row.capacidad_visitantes);
+    expect(entity.minHoursForCourtesy).toBe(row.horas_min_recortesia);
     expect(entity.updatedAt).toBe(row.updated_at);
   });
 
-  it('toRow mapea todos los campos camelCase a snake_case correctamente', () => {
-    const entity = tarifaFromRow(row);
-    const back = tarifaToRow(entity);
-    expect(back.carro_mes).toBe(entity.carroMes);
-    expect(back.moto_mes).toBe(entity.motoMes);
-    expect(back.vis_hora).toBe(entity.visHora);
-    expect(back.horas_gratis).toBe(entity.horasGratis);
-    expect(back.capacidad_visitantes).toBe(entity.capacidadVisitantes);
-    expect(back.horas_min_recortesia).toBe(entity.horasMinRecortesia);
+  it('toRow maps all domain entity fields back to DB row correctly', () => {
+    const entity = pricingFromRow(row);
+    const back = pricingToRow(entity);
+    expect(back.carro_mes).toBe(entity.carMonthlyRate);
+    expect(back.moto_mes).toBe(entity.motorcycleMonthlyRate);
+    expect(back.vis_hora).toBe(entity.hourlyRate);
+    expect(back.horas_gratis).toBe(entity.freeHours);
+    expect(back.capacidad_visitantes).toBe(entity.visitorCapacity);
+    expect(back.horas_min_recortesia).toBe(entity.minHoursForCourtesy);
     expect(back.updated_at).toBe(entity.updatedAt);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(tarifaToRow(tarifaFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(pricingToRow(pricingFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    // Tarifa has no nullable fields, but verify basic values are preserved
-    const entity = tarifaFromRow(row);
-    expect(entity.carroMes).toBe(20000);
-    expect(entity.motoMes).toBe(10000);
+  it('preserves all numeric values', () => {
+    const entity = pricingFromRow(row);
+    expect(entity.carMonthlyRate).toBe(20000);
+    expect(entity.motorcycleMonthlyRate).toBe(10000);
   });
 });
 
-// ---- Actividad ----
+// ---- ActivityLog ----
 
-describe('actividadFromRow / actividadToRow', () => {
-  const row: ActividadRow = {
+describe('activityLogFromRow / activityLogToRow', () => {
+  const row: ActivityLogRow = {
     id: 'act-1',
-    msg: 'Ingresó vehículo ABC123',
+    msg: 'Vehicle entered ABC123',
     ts: '2024-06-01T10:00:00.000Z',
     tipo: 'ingreso',
   };
 
-  it('fromRow mapea todos los campos correctamente', () => {
-    const entity = actividadFromRow(row);
+  it('fromRow maps all fields correctly', () => {
+    const entity = activityLogFromRow(row);
     expect(entity.id).toBe(row.id);
     expect(entity.msg).toBe(row.msg);
     expect(entity.ts).toBe(row.ts);
-    expect(entity.tipo).toBe(row.tipo);
+    expect(entity.category).toBe(row.tipo);
   });
 
-  it('toRow mapea todos los campos correctamente', () => {
-    const entity = actividadFromRow(row);
-    const back = actividadToRow(entity);
+  it('toRow maps all fields correctly', () => {
+    const entity = activityLogFromRow(row);
+    const back = activityLogToRow(entity);
     expect(back.id).toBe(entity.id);
     expect(back.msg).toBe(entity.msg);
     expect(back.ts).toBe(entity.ts);
-    expect(back.tipo).toBe(entity.tipo);
+    expect(back.tipo).toBe(entity.category);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(actividadToRow(actividadFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(activityLogToRow(activityLogFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    // Actividad has no nullable fields, verify different tipo values work
-    const rowSalida: ActividadRow = { ...row, id: 'act-2', tipo: 'salida' };
-    const entity = actividadFromRow(rowSalida);
-    expect(entity.tipo).toBe('salida');
-    expect(actividadToRow(entity)).toEqual(rowSalida);
+  it('handles different category values correctly', () => {
+    const rowSalida: ActivityLogRow = { ...row, id: 'act-2', tipo: 'salida' };
+    const entity = activityLogFromRow(rowSalida);
+    expect(entity.category).toBe('salida');
+    expect(activityLogToRow(entity)).toEqual(rowSalida);
   });
 });
 
-// ---- CierreCaja ----
+// ---- DailyClose ----
 
-describe('cierreCajaFromRow / cierreCajaToRow', () => {
-  const row: CierreCajaRow = {
+describe('dailyCloseFromRow / dailyCloseToRow', () => {
+  const row: DailyCloseRow = {
     id: 'cierre-1',
     fecha: '2024-06-01T23:59:00.000Z',
     fecha_str: '2024-06-01',
@@ -312,37 +324,36 @@ describe('cierreCajaFromRow / cierreCajaToRow', () => {
     total: 257850,
   };
 
-  it('fromRow mapea todos los campos snake_case a camelCase correctamente', () => {
-    const entity = cierreCajaFromRow(row);
+  it('fromRow maps all fields from DB row to domain entity correctly', () => {
+    const entity = dailyCloseFromRow(row);
     expect(entity.id).toBe(row.id);
-    expect(entity.fecha).toBe(row.fecha);
-    expect(entity.fechaStr).toBe(row.fecha_str);
-    expect(entity.cobrosVis).toBe(row.cobros_vis);
-    expect(entity.totalVis).toBe(row.total_vis);
-    expect(entity.cobrosMens).toBe(row.cobros_mens);
-    expect(entity.totalMens).toBe(row.total_mens);
-    expect(entity.totalIva).toBe(row.total_iva);
+    expect(entity.closedAt).toBe(row.fecha);
+    expect(entity.dateStr).toBe(row.fecha_str);
+    expect(entity.visitorCharges).toBe(row.cobros_vis);
+    expect(entity.visitorTotal).toBe(row.total_vis);
+    expect(entity.monthlyCharges).toBe(row.cobros_mens);
+    expect(entity.monthlyTotal).toBe(row.total_mens);
+    expect(entity.totalTax).toBe(row.total_iva);
     expect(entity.total).toBe(row.total);
   });
 
-  it('toRow mapea todos los campos camelCase a snake_case correctamente', () => {
-    const entity = cierreCajaFromRow(row);
-    const back = cierreCajaToRow(entity);
-    expect(back.fecha_str).toBe(entity.fechaStr);
-    expect(back.cobros_vis).toBe(entity.cobrosVis);
-    expect(back.total_vis).toBe(entity.totalVis);
-    expect(back.cobros_mens).toBe(entity.cobrosMens);
-    expect(back.total_mens).toBe(entity.totalMens);
-    expect(back.total_iva).toBe(entity.totalIva);
+  it('toRow maps all domain entity fields back to DB row correctly', () => {
+    const entity = dailyCloseFromRow(row);
+    const back = dailyCloseToRow(entity);
+    expect(back.fecha_str).toBe(entity.dateStr);
+    expect(back.cobros_vis).toBe(entity.visitorCharges);
+    expect(back.total_vis).toBe(entity.visitorTotal);
+    expect(back.cobros_mens).toBe(entity.monthlyCharges);
+    expect(back.total_mens).toBe(entity.monthlyTotal);
+    expect(back.total_iva).toBe(entity.totalTax);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(cierreCajaToRow(cierreCajaFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(dailyCloseToRow(dailyCloseFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    // CierreCaja has no nullable fields, but verify zero values work
-    const rowZero: CierreCajaRow = {
+  it('handles zero values correctly', () => {
+    const rowZero: DailyCloseRow = {
       ...row,
       id: 'cierre-empty',
       cobros_vis: 0,
@@ -352,17 +363,17 @@ describe('cierreCajaFromRow / cierreCajaToRow', () => {
       total_iva: 0,
       total: 0,
     };
-    const entity = cierreCajaFromRow(rowZero);
-    expect(entity.cobrosVis).toBe(0);
-    expect(entity.totalVis).toBe(0);
-    expect(cierreCajaToRow(entity)).toEqual(rowZero);
+    const entity = dailyCloseFromRow(rowZero);
+    expect(entity.visitorCharges).toBe(0);
+    expect(entity.visitorTotal).toBe(0);
+    expect(dailyCloseToRow(entity)).toEqual(rowZero);
   });
 });
 
-// ---- PagoMensualidad ----
+// ---- MonthlyPayment ----
 
-describe('pagoMensualidadFromRow / pagoMensualidadToRow', () => {
-  const row: PagoMensualidadRow = {
+describe('monthlyPaymentFromRow / monthlyPaymentToRow', () => {
+  const row: MonthlyPaymentRow = {
     id: 'pago-1',
     residente_id: 'res-1',
     placa: 'ABC123',
@@ -374,36 +385,35 @@ describe('pagoMensualidadFromRow / pagoMensualidadToRow', () => {
     mes_key: '2024-06',
   };
 
-  it('fromRow mapea todos los campos snake_case a camelCase correctamente', () => {
-    const entity = pagoMensualidadFromRow(row);
+  it('fromRow maps all fields from DB row to domain entity correctly', () => {
+    const entity = monthlyPaymentFromRow(row);
     expect(entity.id).toBe(row.id);
-    expect(entity.residenteId).toBe(row.residente_id);
-    expect(entity.placa).toBe(row.placa);
-    expect(entity.cod).toBe(row.cod);
-    expect(entity.nombre).toBe(row.nombre);
-    expect(entity.tipo).toBe(row.tipo);
-    expect(entity.fecha).toBe(row.fecha);
-    expect(entity.monto).toBe(row.monto);
-    expect(entity.mesKey).toBe(row.mes_key);
+    expect(entity.residentId).toBe(row.residente_id);
+    expect(entity.plate).toBe(row.placa);
+    expect(entity.aptCode).toBe(row.cod);
+    expect(entity.name).toBe(row.nombre);
+    expect(entity.vehicleType).toBe('car');
+    expect(entity.date).toBe(row.fecha);
+    expect(entity.amount).toBe(row.monto);
+    expect(entity.monthKey).toBe(row.mes_key);
   });
 
-  it('toRow mapea todos los campos camelCase a snake_case correctamente', () => {
-    const entity = pagoMensualidadFromRow(row);
-    const back = pagoMensualidadToRow(entity);
-    expect(back.residente_id).toBe(entity.residenteId);
-    expect(back.mes_key).toBe(entity.mesKey);
+  it('toRow maps all domain entity fields back to DB row correctly', () => {
+    const entity = monthlyPaymentFromRow(row);
+    const back = monthlyPaymentToRow(entity);
+    expect(back.residente_id).toBe(entity.residentId);
+    expect(back.mes_key).toBe(entity.monthKey);
   });
 
-  it('round-trip: toRow(fromRow(row)) === row', () => {
-    expect(pagoMensualidadToRow(pagoMensualidadFromRow(row))).toEqual(row);
+  it('round-trip: toRow(fromRow(row)) equals row', () => {
+    expect(monthlyPaymentToRow(monthlyPaymentFromRow(row))).toEqual(row);
   });
 
-  it('maneja campos nullable correctamente (null → null)', () => {
-    // PagoMensualidad has no nullable fields, verify moto tipo works
-    const rowMoto: PagoMensualidadRow = { ...row, id: 'pago-m', tipo: 'moto', monto: 10000 };
-    const entity = pagoMensualidadFromRow(rowMoto);
-    expect(entity.tipo).toBe('moto');
-    expect(entity.monto).toBe(10000);
-    expect(pagoMensualidadToRow(entity)).toEqual(rowMoto);
+  it('translates motorcycle vehicleType correctly', () => {
+    const rowMoto: MonthlyPaymentRow = { ...row, id: 'pago-m', tipo: 'moto', monto: 10000 };
+    const entity = monthlyPaymentFromRow(rowMoto);
+    expect(entity.vehicleType).toBe('motorcycle');
+    expect(entity.amount).toBe(10000);
+    expect(monthlyPaymentToRow(entity)).toEqual(rowMoto);
   });
 });

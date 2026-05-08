@@ -9,12 +9,12 @@ export default function StatusBar({ status, pending }: StatusBarProps) {
   let label: string;
 
   if (status === 'syncing') {
-    label = `Sincronizando… (${pending})`;
+    label = `Syncing… (${pending})`;
   } else if (status === 'online') {
-    label = pending > 0 ? `Sincronizando (${pending})` : 'En línea';
+    label = pending > 0 ? `Syncing (${pending})` : 'Online';
   } else {
     // offline
-    label = pending > 0 ? `Sin red — ${pending} pendientes` : 'Sin red';
+    label = pending > 0 ? `No network — ${pending} pending` : 'No network';
   }
 
   return (

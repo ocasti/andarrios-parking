@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import AppProviders from '../AppProviders';
 
 describe('AppProviders', () => {
-  it('renderiza sus children correctamente', () => {
+  it('renders children correctly', () => {
     render(<AppProviders><span>contenido</span></AppProviders>);
     expect(screen.getByText('contenido')).toBeInTheDocument();
   });

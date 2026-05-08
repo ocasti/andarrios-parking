@@ -1,45 +1,39 @@
 /**
  * CobroService
- * Calcula el cobro de una visita de parqueadero.
+ * Calculates the parking visit charge.
  *
- * Reglas:
- * - Si cortesiaAplica=true, las primeras `horasGratis` son gratuitas.
- * - Si cortesiaAplica=false, se cobra desde la primera hora (horasGratis=0).
- * - Las horas cobradas se redondean hacia arriba (ceil).
- * - total = base (IVA ya incluido en precio; iva se extrae de la base).
+ * Rules:
+ * - If courtesyApplies=true, the first `freeHours` are free.
+ * - If courtesyApplies=false, charging starts from the first hour (freeHours=0).
+ * - Charged hours are rounded up (ceil).
+ * - total = base (tax is already included in the price; tax is extracted from base).
  */
 
-export interface ParametrosCobro {
-  horas: number;
-  tarifaHora: number;
-  horasGratis: number;
-  porcentajeIva: number;
-  cortesiaAplica: boolean;
+export interface ChargeParams {
+  hours: number;
+  hourlyRate: number;
+  freeHours: number;
+  taxRate: number;
+  courtesyApplies: boolean;
 }
 
-/** @deprecated Use ParametrosCobro */
-export type CalcularCobroParams = ParametrosCobro;
-
-export interface ResultadoCobro {
-  horasCobradas: number;
-  horasGratis: number;
+export interface ChargeResult {
+  chargedHours: number;
+  freeHours: number;
   base: number;
   iva: number;
   total: number;
 }
 
-/** @deprecated Use ResultadoCobro */
-export type CalcularCobroResult = ResultadoCobro;
+export function calculateCharge(params: ChargeParams): ChargeResult {
+  const { hours, hourlyRate, freeHours: freeHoursParam, taxRate, courtesyApplies } = params;
 
-export function calcularCobro(params: ParametrosCobro): ResultadoCobro {
-  const { horas, tarifaHora, horasGratis: horasGratisParam, porcentajeIva, cortesiaAplica } = params as ParametrosCobro;
-
-  const horasGratis = cortesiaAplica ? horasGratisParam : 0;
-  const horasCobradas = Math.max(0, Math.ceil(horas - horasGratis));
-  const base = horasCobradas * tarifaHora;
-  // IVA extraído de un precio que ya incluye IVA: iva = base * pct / (100 + pct)
-  const iva = base === 0 ? 0 : Math.round((base * porcentajeIva) / (100 + porcentajeIva));
+  const freeHours = courtesyApplies ? freeHoursParam : 0;
+  const chargedHours = Math.max(0, Math.ceil(hours - freeHours));
+  const base = chargedHours * hourlyRate;
+  // Tax extracted from a price that already includes tax: iva = base * pct / (100 + pct)
+  const iva = base === 0 ? 0 : Math.round((base * taxRate) / (100 + taxRate));
   const total = base;
 
-  return { horasCobradas, horasGratis, base, iva, total };
+  return { chargedHours, freeHours, base, iva, total };
 }

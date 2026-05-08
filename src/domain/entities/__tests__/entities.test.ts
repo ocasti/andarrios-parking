@@ -1,227 +1,227 @@
 import { describe, it, expect } from 'vitest';
-import { TARIFA_DEFAULTS } from '../Tarifa';
+import { PRICING_DEFAULTS } from '../PricingConfig';
 import type {
-  TipoVehiculo,
-  Residente,
-  NuevoResidente,
-} from '../Residente';
-import type { Visitante, NuevoVisitante } from '../Visitante';
-import type { Mensualidad, EstadoMensualidad } from '../Mensualidad';
-import type { Tarifa } from '../Tarifa';
-import type { Bloqueado } from '../Bloqueado';
-import type { CierreCaja } from '../CierreCaja';
-import type { Actividad } from '../Actividad';
-import type { PagoMensualidad } from '../PagoMensualidad';
+  VehicleType,
+  Resident,
+  NewResident,
+} from '../Resident';
+import type { Visitor, NewVisitor } from '../Visitor';
+import type { MonthlyFee, FeeStatus } from '../MonthlyFee';
+import type { PricingConfig } from '../PricingConfig';
+import type { BlockedUnit } from '../BlockedUnit';
+import type { DailyClose } from '../DailyClose';
+import type { ActivityLog } from '../ActivityLog';
+import type { MonthlyPayment } from '../MonthlyPayment';
 
 // ---------------------------------------------------------------------------
-// TARIFA_DEFAULTS — única constante en runtime del módulo de entidades
+// PRICING_DEFAULTS — only runtime constant in the entities module
 // ---------------------------------------------------------------------------
-describe('TARIFA_DEFAULTS', () => {
-  it('tiene valores por defecto correctos', () => {
-    expect(TARIFA_DEFAULTS.carroMes).toBe(20000);
-    expect(TARIFA_DEFAULTS.motoMes).toBe(10000);
-    expect(TARIFA_DEFAULTS.visHora).toBe(1000);
-    expect(TARIFA_DEFAULTS.horasGratis).toBe(2);
-    expect(TARIFA_DEFAULTS.iva).toBe(19);
-    expect(TARIFA_DEFAULTS.capacidadVisitantes).toBe(0);
-    expect(TARIFA_DEFAULTS.horasMinRecortesia).toBe(6);
+describe('PRICING_DEFAULTS', () => {
+  it('has correct default values', () => {
+    expect(PRICING_DEFAULTS.carMonthlyRate).toBe(20000);
+    expect(PRICING_DEFAULTS.motorcycleMonthlyRate).toBe(10000);
+    expect(PRICING_DEFAULTS.hourlyRate).toBe(1000);
+    expect(PRICING_DEFAULTS.freeHours).toBe(2);
+    expect(PRICING_DEFAULTS.iva).toBe(19);
+    expect(PRICING_DEFAULTS.visitorCapacity).toBe(0);
+    expect(PRICING_DEFAULTS.minHoursForCourtesy).toBe(6);
   });
 
-  it('no incluye id ni updatedAt (Omit<Tarifa, "id" | "updatedAt">)', () => {
-    expect('id' in TARIFA_DEFAULTS).toBe(false);
-    expect('updatedAt' in TARIFA_DEFAULTS).toBe(false);
+  it('does not include id or updatedAt (Omit<PricingConfig, "id" | "updatedAt">)', () => {
+    expect('id' in PRICING_DEFAULTS).toBe(false);
+    expect('updatedAt' in PRICING_DEFAULTS).toBe(false);
   });
 
-  it('tiene exactamente 7 propiedades', () => {
-    expect(Object.keys(TARIFA_DEFAULTS)).toHaveLength(7);
+  it('has exactly 7 properties', () => {
+    expect(Object.keys(PRICING_DEFAULTS)).toHaveLength(7);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Comprobaciones de forma (shape checks) sobre objetos literales tipados
+// Shape checks on typed object literals
 // ---------------------------------------------------------------------------
-describe('Residente — shape', () => {
-  it('acepta un objeto con todos los campos requeridos', () => {
-    const r: Residente = {
+describe('Resident — shape', () => {
+  it('accepts an object with all required fields', () => {
+    const r: Resident = {
       id: 'uuid-1',
-      cod: 'T01-101',
-      torre: 1,
-      piso: 1,
-      apto: 1,
-      placa: 'ABC123',
-      tipo: 'carro',
-      nombre: 'Juan',
-      cel: null,
-      fechaRegistro: '2024-01-01T00:00:00.000Z',
+      aptCode: 'T01-101',
+      tower: 1,
+      floor: 1,
+      unit: 1,
+      plate: 'ABC123',
+      vehicleType: 'car',
+      name: 'Juan',
+      phone: null,
+      registrationDate: '2024-01-01T00:00:00.000Z',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
       deletedAt: null,
     };
     expect(r.id).toBe('uuid-1');
-    expect(r.tipo).toBe('carro');
+    expect(r.vehicleType).toBe('car');
   });
 
-  it('NuevoResidente no tiene id, createdAt, updatedAt, deletedAt', () => {
-    const nuevo: NuevoResidente = {
-      cod: 'T01-101',
-      torre: 1,
-      piso: 1,
-      apto: 1,
-      placa: 'ABC123',
-      tipo: 'moto',
-      nombre: 'Ana',
-      cel: '+573001234567',
-      fechaRegistro: '2024-01-01T00:00:00.000Z',
+  it('NewResident does not have id, createdAt, updatedAt, deletedAt', () => {
+    const newResident: NewResident = {
+      aptCode: 'T01-101',
+      tower: 1,
+      floor: 1,
+      unit: 1,
+      plate: 'ABC123',
+      vehicleType: 'motorcycle',
+      name: 'Ana',
+      phone: '+573001234567',
+      registrationDate: '2024-01-01T00:00:00.000Z',
     };
-    expect(nuevo.placa).toBe('ABC123');
-    // type-level: el compilador rechazaría añadir id / createdAt / etc.
+    expect(newResident.plate).toBe('ABC123');
+    // type-level: the compiler would reject adding id / createdAt / etc.
   });
 });
 
-describe('TipoVehiculo — valores de unión', () => {
-  it('acepta "carro"', () => {
-    const t: TipoVehiculo = 'carro';
-    expect(t).toBe('carro');
+describe('VehicleType — union values', () => {
+  it('accepts "car"', () => {
+    const t: VehicleType = 'car';
+    expect(t).toBe('car');
   });
 
-  it('acepta "moto"', () => {
-    const t: TipoVehiculo = 'moto';
-    expect(t).toBe('moto');
-  });
-});
-
-describe('EstadoMensualidad — valores de unión', () => {
-  it('acepta "pendiente"', () => {
-    const e: EstadoMensualidad = 'pendiente';
-    expect(e).toBe('pendiente');
-  });
-
-  it('acepta "pagado"', () => {
-    const e: EstadoMensualidad = 'pagado';
-    expect(e).toBe('pagado');
+  it('accepts "motorcycle"', () => {
+    const t: VehicleType = 'motorcycle';
+    expect(t).toBe('motorcycle');
   });
 });
 
-describe('Visitante — shape', () => {
-  it('acepta visitante con salida nula (en parqueadero)', () => {
-    const v: Visitante = {
+describe('FeeStatus — union values', () => {
+  it('accepts "pending"', () => {
+    const e: FeeStatus = 'pending';
+    expect(e).toBe('pending');
+  });
+
+  it('accepts "paid"', () => {
+    const e: FeeStatus = 'paid';
+    expect(e).toBe('paid');
+  });
+});
+
+describe('Visitor — shape', () => {
+  it('accepts visitor with null checkOut (currently parked)', () => {
+    const v: Visitor = {
       id: 'v-1',
-      cod: 'T02-201',
-      placa: 'XYZ789',
-      tipo: 'carro',
-      nombre: 'Pedro',
-      tel: null,
-      entrada: '2024-06-01T10:00:00.000Z',
-      salida: null,
-      horas: null,
-      base: null,
-      iva: null,
+      aptCode: 'T02-201',
+      plate: 'XYZ789',
+      vehicleType: 'car',
+      name: 'Pedro',
+      phone: null,
+      checkIn: '2024-06-01T10:00:00.000Z',
+      checkOut: null,
+      hours: null,
+      baseAmount: null,
+      tax: null,
       total: null,
-      cortesiaAplica: false,
+      courtesyApplies: false,
       createdAt: '2024-06-01T10:00:00.000Z',
       updatedAt: '2024-06-01T10:00:00.000Z',
     };
-    expect(v.salida).toBeNull();
-    expect(v.cortesiaAplica).toBe(false);
+    expect(v.checkOut).toBeNull();
+    expect(v.courtesyApplies).toBe(false);
   });
 
-  it('NuevoVisitante solo tiene los 5 campos de registro de entrada', () => {
-    const nv: NuevoVisitante = {
-      cod: 'T01-101',
-      placa: 'ABC123',
-      tipo: 'moto',
-      nombre: 'Laura',
-      tel: null,
+  it('NewVisitor only has the 5 check-in registration fields', () => {
+    const nv: NewVisitor = {
+      aptCode: 'T01-101',
+      plate: 'ABC123',
+      vehicleType: 'motorcycle',
+      name: 'Laura',
+      phone: null,
     };
     expect(Object.keys(nv)).toHaveLength(5);
   });
 });
 
-describe('Mensualidad — shape', () => {
-  it('acepta mensualidad pendiente sin fecha de pago', () => {
-    const m: Mensualidad = {
+describe('MonthlyFee — shape', () => {
+  it('accepts pending monthly fee without payment date', () => {
+    const m: MonthlyFee = {
       id: 'm-1',
-      residenteId: 'r-1',
-      mesKey: '2024-06',
-      estado: 'pendiente',
-      fechaPago: null,
-      monto: null,
+      residentId: 'r-1',
+      monthKey: '2024-06',
+      status: 'pending',
+      paymentDate: null,
+      amount: null,
       createdAt: '2024-06-01T00:00:00.000Z',
       updatedAt: '2024-06-01T00:00:00.000Z',
     };
-    expect(m.estado).toBe('pendiente');
-    expect(m.fechaPago).toBeNull();
+    expect(m.status).toBe('pending');
+    expect(m.paymentDate).toBeNull();
   });
 });
 
-describe('Bloqueado — shape', () => {
-  it('acepta bloqueo activo con desbloqueadoAt nulo', () => {
-    const b: Bloqueado = {
+describe('BlockedUnit — shape', () => {
+  it('accepts active block with null unblockedAt', () => {
+    const b: BlockedUnit = {
       id: 'bl-1',
-      cod: 'T03-301',
-      motivo: 'Mora',
-      fechaBloqueo: '2024-05-01',
-      desbloqueadoAt: null,
+      aptCode: 'T03-301',
+      reason: 'Arrears',
+      blockedAt: '2024-05-01',
+      unblockedAt: null,
     };
-    expect(b.desbloqueadoAt).toBeNull();
+    expect(b.unblockedAt).toBeNull();
   });
 });
 
-describe('CierreCaja — shape', () => {
-  it('acepta un cierre con todos los campos numéricos', () => {
-    const c: CierreCaja = {
+describe('DailyClose — shape', () => {
+  it('accepts a close with all numeric fields', () => {
+    const c: DailyClose = {
       id: 'cc-1',
-      fecha: '2024-06-30T23:59:59.000Z',
-      fechaStr: '2024-06-30',
-      cobrosVis: 5,
-      totalVis: 15000,
-      cobrosMens: 10,
-      totalMens: 200000,
-      totalIva: 2850,
+      closedAt: '2024-06-30T23:59:59.000Z',
+      dateStr: '2024-06-30',
+      visitorCharges: 5,
+      visitorTotal: 15000,
+      monthlyCharges: 10,
+      monthlyTotal: 200000,
+      totalTax: 2850,
       total: 217850,
     };
     expect(c.total).toBe(217850);
   });
 });
 
-describe('Actividad — shape', () => {
-  it('acepta actividad con tipo string', () => {
-    const a: Actividad = {
+describe('ActivityLog — shape', () => {
+  it('accepts activity with string category', () => {
+    const a: ActivityLog = {
       id: 'act-1',
-      msg: 'Entrada registrada',
+      msg: 'Entry registered',
       ts: '2024-06-01T10:00:00.000Z',
-      tipo: 'entrada',
+      category: 'visitor',
     };
-    expect(a.tipo).toBe('entrada');
+    expect(a.category).toBe('visitor');
   });
 });
 
-describe('PagoMensualidad — shape', () => {
-  it('acepta pago con todos los campos', () => {
-    const p: PagoMensualidad = {
+describe('MonthlyPayment — shape', () => {
+  it('accepts payment with all fields', () => {
+    const p: MonthlyPayment = {
       id: 'pm-1',
-      residenteId: 'r-1',
-      placa: 'ABC123',
-      cod: 'T01-101',
-      nombre: 'Juan',
-      tipo: 'carro',
-      fecha: '2024-06-15T12:00:00.000Z',
-      monto: 20000,
-      mesKey: '2024-06',
+      residentId: 'r-1',
+      plate: 'ABC123',
+      aptCode: 'T01-101',
+      name: 'Juan',
+      vehicleType: 'car',
+      date: '2024-06-15T12:00:00.000Z',
+      amount: 20000,
+      monthKey: '2024-06',
     };
-    expect(p.monto).toBe(20000);
-    expect(p.tipo).toBe('carro');
+    expect(p.amount).toBe(20000);
+    expect(p.vehicleType).toBe('car');
   });
 });
 
-describe('Tarifa — shape', () => {
-  it('acepta una tarifa completa', () => {
-    const t: Tarifa = {
+describe('PricingConfig — shape', () => {
+  it('accepts a complete pricing config', () => {
+    const t: PricingConfig = {
       id: 1,
-      ...TARIFA_DEFAULTS,
+      ...PRICING_DEFAULTS,
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
     expect(t.id).toBe(1);
-    expect(t.carroMes).toBe(TARIFA_DEFAULTS.carroMes);
+    expect(t.carMonthlyRate).toBe(PRICING_DEFAULTS.carMonthlyRate);
   });
 });

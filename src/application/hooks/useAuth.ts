@@ -8,7 +8,7 @@ export interface AuthState {
   loading: boolean;
 }
 
-// Singleton de estado para evitar múltiples fetches concurrentes
+// State singleton to avoid concurrent multiple fetches
 let _state: AuthState = { user: null, isAdmin: false, loading: true };
 const _listeners = new Set<(s: AuthState) => void>();
 let _initialized = false;

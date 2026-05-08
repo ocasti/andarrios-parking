@@ -1,76 +1,76 @@
 import { describe, it, expect } from 'vitest';
-import { evaluarCortesia, calcularDesde } from '../CortesiaService';
+import { evaluateCourtesy, calculateSince } from '../CortesiaService';
 
-describe('evaluarCortesia', () => {
-  it('aplica cortesía cuando no hay historial reciente', () => {
+describe('evaluateCourtesy', () => {
+  it('applies courtesy when there is no recent exit history', () => {
     // Arrange
-    const historial: { salidaAt: string }[] = [];
+    const history: { checkedOutAt: string }[] = [];
     // Act
-    const result = evaluarCortesia(historial, 6);
+    const result = evaluateCourtesy(history, 6);
     // Assert
     expect(result).toBe(true);
   });
 
-  it('no aplica cortesía cuando hay una salida reciente', () => {
+  it('does not apply courtesy when there is a recent exit', () => {
     // Arrange
-    const historial = [{ salidaAt: new Date().toISOString() }];
+    const history = [{ checkedOutAt: new Date().toISOString() }];
     // Act
-    const result = evaluarCortesia(historial, 6);
+    const result = evaluateCourtesy(history, 6);
     // Assert
     expect(result).toBe(false);
   });
 
-  it('no aplica cortesía cuando hay múltiples salidas recientes', () => {
+  it('does not apply courtesy when there are multiple recent exits', () => {
     // Arrange
     const now = new Date().toISOString();
-    const historial = [
-      { salidaAt: now },
-      { salidaAt: now },
+    const history = [
+      { checkedOutAt: now },
+      { checkedOutAt: now },
     ];
     // Act
-    const result = evaluarCortesia(historial, 6);
+    const result = evaluateCourtesy(history, 6);
     // Assert
     expect(result).toBe(false);
   });
 
-  it('siempre aplica cortesía cuando horasMinRecortesia es 0', () => {
-    // Arrange — aunque haya historial reciente, con 0h siempre aplica
-    const historial = [{ salidaAt: new Date().toISOString() }];
+  it('always applies courtesy when minHoursForCourtesy is 0', () => {
+    // Arrange — even with recent history, with 0h courtesy always applies
+    const history = [{ checkedOutAt: new Date().toISOString() }];
     // Act
-    const result = evaluarCortesia(historial, 0);
+    const result = evaluateCourtesy(history, 0);
     // Assert
     expect(result).toBe(true);
   });
 
-  it('siempre aplica cortesía cuando horasMinRecortesia es negativo', () => {
+  it('always applies courtesy when minHoursForCourtesy is negative', () => {
     // Arrange
-    const historial = [{ salidaAt: new Date().toISOString() }];
+    const history = [{ checkedOutAt: new Date().toISOString() }];
     // Act
-    const result = evaluarCortesia(historial, -3);
+    const result = evaluateCourtesy(history, -3);
     // Assert
     expect(result).toBe(true);
   });
 });
 
-describe('calcularDesde', () => {
-  it('retorna fecha correcta restando las horas indicadas', () => {
+describe('calculateSince', () => {
+  it('returns correct date subtracting the indicated hours', () => {
     // Arrange
-    const ahora = new Date('2026-05-08T12:00:00Z');
-    const horas = 3;
+    const now = new Date('2026-05-08T12:00:00Z');
+    const hours = 3;
     // Act
-    const resultado = calcularDesde(horas, ahora);
+    const result = calculateSince(hours, now);
     // Assert
-    const esperado = new Date('2026-05-08T09:00:00Z');
-    expect(resultado.getTime()).toBe(esperado.getTime());
+    const expected = new Date('2026-05-08T09:00:00Z');
+    expect(result.getTime()).toBe(expected.getTime());
   });
 
-  it('retorna fecha 6 horas atrás para horasMin=6', () => {
+  it('returns date 6 hours back for hours=6', () => {
     // Arrange
-    const ahora = new Date('2026-05-08T18:00:00Z');
+    const now = new Date('2026-05-08T18:00:00Z');
     // Act
-    const resultado = calcularDesde(6, ahora);
+    const result = calculateSince(6, now);
     // Assert
-    const esperado = new Date('2026-05-08T12:00:00Z');
-    expect(resultado.getTime()).toBe(esperado.getTime());
+    const expected = new Date('2026-05-08T12:00:00Z');
+    expect(result.getTime()).toBe(expected.getTime());
   });
 });

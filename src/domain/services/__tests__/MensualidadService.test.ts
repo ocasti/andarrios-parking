@@ -1,63 +1,55 @@
 import { describe, it, expect } from 'vitest';
-import { calcularMontoMensualidad, generarMesKey, esMismoMes } from '../MensualidadService';
-import type { TarifaMensual } from '../MensualidadService';
+import { calculateMonthlyAmount, generateMonthKey, isSameMonth } from '../MensualidadService';
+import type { MonthlyRateConfig } from '../MensualidadService';
 
-describe('calcularMontoMensualidad', () => {
-  it('retorna carroMes para tipo carro', () => {
+describe('calculateMonthlyAmount', () => {
+  it('returns carMonthlyRate for vehicle type car', () => {
     // Arrange
-    const tarifa: TarifaMensual = { carroMes: 25000, motoMes: 12000 };
+    const config: MonthlyRateConfig = { carMonthlyRate: 25000, motorcycleMonthlyRate: 12000 };
     // Act
-    const result = calcularMontoMensualidad('carro', tarifa);
+    const result = calculateMonthlyAmount('car', config);
     // Assert
     expect(result).toBe(25000);
   });
 
-  it('retorna motoMes para tipo moto', () => {
+  it('returns motorcycleMonthlyRate for vehicle type motorcycle', () => {
     // Arrange
-    const tarifa: TarifaMensual = { carroMes: 25000, motoMes: 12000 };
+    const config: MonthlyRateConfig = { carMonthlyRate: 25000, motorcycleMonthlyRate: 12000 };
     // Act
-    const result = calcularMontoMensualidad('moto', tarifa);
+    const result = calculateMonthlyAmount('motorcycle', config);
     // Assert
     expect(result).toBe(12000);
   });
 
-  it('con tarifa { carroMes:25000, motoMes:12000 } → carro=25000, moto=12000', () => {
+  it('with pricing { carMonthlyRate:25000, motorcycleMonthlyRate:12000 } → car=25000, motorcycle=12000', () => {
     // Arrange
-    const tarifa: TarifaMensual = { carroMes: 25000, motoMes: 12000 };
+    const config: MonthlyRateConfig = { carMonthlyRate: 25000, motorcycleMonthlyRate: 12000 };
     // Act & Assert
-    expect(calcularMontoMensualidad('carro', tarifa)).toBe(25000);
-    expect(calcularMontoMensualidad('moto', tarifa)).toBe(12000);
+    expect(calculateMonthlyAmount('car', config)).toBe(25000);
+    expect(calculateMonthlyAmount('motorcycle', config)).toBe(12000);
   });
 });
 
-describe('generarMesKey', () => {
-  it('retorna formato YYYY-MM', () => {
+describe('generateMonthKey', () => {
+  it('returns YYYY-MM format', () => {
     // Arrange / Act
-    const result = generarMesKey(new Date());
+    const result = generateMonthKey(new Date());
     // Assert
     expect(result).toMatch(/^\d{4}-\d{2}$/);
   });
 
-  it('retorna el mes correcto para una fecha conocida', () => {
-    // Arrange — 2026-05-08 10:00 UTC = 2026-05-08 05:00 en Bogotá → mes 2026-05
-    const fecha = new Date('2026-05-08T10:00:00Z');
+  it('returns correct month for a known date', () => {
+    // Arrange — 2026-05-08 10:00 UTC = 2026-05-08 05:00 in Bogotá → month 2026-05
+    const date = new Date('2026-05-08T10:00:00Z');
     // Act
-    const result = generarMesKey(fecha);
+    const result = generateMonthKey(date);
     // Assert
     expect(result).toBe('2026-05');
   });
 
-  it('sin parámetro retorna el mes actual', () => {
+  it('without parameter returns the current month', () => {
     // Arrange
     const now = new Date();
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Bogota',
-      year: 'numeric',
-      month: '2-digit',
-    });
-    const expectedRaw = formatter.format(now);
-    // en-CA con year+month puede devolver "2026-05" o "05/2026" según runtime
-    // Usamos slice(0,7) del colDateStr approach para consistencia:
     const ymdFormatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Bogota',
       year: 'numeric',
@@ -66,30 +58,30 @@ describe('generarMesKey', () => {
     });
     const expected = ymdFormatter.format(now).slice(0, 7);
     // Act
-    const result = generarMesKey();
+    const result = generateMonthKey();
     // Assert
     expect(result).toBe(expected);
   });
 });
 
-describe('esMismoMes', () => {
-  it('true para mismas claves', () => {
+describe('isSameMonth', () => {
+  it('returns true for matching keys', () => {
     // Arrange / Act
-    const result = esMismoMes('2026-05', '2026-05');
+    const result = isSameMonth('2026-05', '2026-05');
     // Assert
     expect(result).toBe(true);
   });
 
-  it('false para claves distintas', () => {
+  it('returns false for different keys', () => {
     // Arrange / Act
-    const result = esMismoMes('2026-05', '2026-06');
+    const result = isSameMonth('2026-05', '2026-06');
     // Assert
     expect(result).toBe(false);
   });
 
-  it('false para año distinto mismo mes', () => {
+  it('returns false for different year same month', () => {
     // Arrange / Act
-    const result = esMismoMes('2025-05', '2026-05');
+    const result = isSameMonth('2025-05', '2026-05');
     // Assert
     expect(result).toBe(false);
   });

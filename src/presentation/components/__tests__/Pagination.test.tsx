@@ -16,81 +16,81 @@ describe('Pagination', () => {
     onChange: vi.fn(),
   };
 
-  it('muestra el número de página actual', () => {
+  it('shows the current page number', () => {
     render(<Pagination {...defaultProps} />);
     expect(screen.getByText('2 / 5')).toBeInTheDocument();
   });
 
-  it('llama onChange con página anterior al hacer click en Anterior', () => {
+  it('calls onChange with previous page on click of Previous', () => {
     const onChange = vi.fn();
     render(<Pagination {...defaultProps} onChange={onChange} />);
-    fireEvent.click(screen.getByText('‹ Anterior'));
+    fireEvent.click(screen.getByText('‹ Previous'));
     expect(onChange).toHaveBeenCalledWith(1);
   });
 
-  it('llama onChange con página siguiente al hacer click en Siguiente', () => {
+  it('calls onChange with next page on click of Next', () => {
     const onChange = vi.fn();
     render(<Pagination {...defaultProps} onChange={onChange} />);
-    fireEvent.click(screen.getByText('Siguiente ›'));
+    fireEvent.click(screen.getByText('Next ›'));
     expect(onChange).toHaveBeenCalledWith(3);
   });
 
-  it('deshabilita botón Anterior en página 1', () => {
+  it('disables Previous button on page 1', () => {
     render(<Pagination {...defaultProps} page={1} />);
-    expect(screen.getByText('‹ Anterior')).toBeDisabled();
-    expect(screen.getByText('« Inicio')).toBeDisabled();
+    expect(screen.getByText('‹ Previous')).toBeDisabled();
+    expect(screen.getByText('« First')).toBeDisabled();
   });
 
-  it('deshabilita botón Siguiente en última página', () => {
+  it('disables Next button on last page', () => {
     render(<Pagination {...defaultProps} page={5} />);
-    expect(screen.getByText('Siguiente ›')).toBeDisabled();
-    expect(screen.getByText('Fin »')).toBeDisabled();
+    expect(screen.getByText('Next ›')).toBeDisabled();
+    expect(screen.getByText('Last »')).toBeDisabled();
   });
 
-  it('muestra el total de registros', () => {
+  it('shows the total record count', () => {
     render(<Pagination {...defaultProps} />);
-    // page=2, pageSize=10 → from=11, to=20 de 50
-    expect(screen.getByText('11–20 de 50')).toBeInTheDocument();
+    // page=2, pageSize=10 → from=11, to=20 of 50
+    expect(screen.getByText('11–20 of 50')).toBeInTheDocument();
   });
 
-  it('no renderiza nada si totalPages <= 1 y total <= pageSize', () => {
+  it('does not render anything if totalPages <= 1 and total <= pageSize', () => {
     const { container } = render(
       <Pagination page={1} totalPages={1} total={5} pageSize={10} onChange={vi.fn()} />
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it('llama onChange con página 1 al hacer click en Inicio', () => {
+  it('calls onChange with page 1 on click of First', () => {
     const onChange = vi.fn();
     render(<Pagination {...defaultProps} page={3} onChange={onChange} />);
-    fireEvent.click(screen.getByText('« Inicio'));
+    fireEvent.click(screen.getByText('« First'));
     expect(onChange).toHaveBeenCalledWith(1);
   });
 
-  it('llama onChange con totalPages al hacer click en Fin', () => {
+  it('calls onChange with totalPages on click of Last', () => {
     const onChange = vi.fn();
     render(<Pagination {...defaultProps} page={2} onChange={onChange} />);
-    fireEvent.click(screen.getByText('Fin »'));
+    fireEvent.click(screen.getByText('Last »'));
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
-  it('muestra indicador de carga cuando loading=true', () => {
+  it('shows loading indicator when loading=true', () => {
     render(<Pagination {...defaultProps} loading={true} />);
-    expect(screen.getByText('Cargando…')).toBeInTheDocument();
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
   });
 
-  it('muestra Sin resultados cuando total es 0', () => {
+  it('shows No results when total is 0', () => {
     render(
       <Pagination page={1} totalPages={2} total={0} pageSize={10} onChange={vi.fn()} />
     );
-    expect(screen.getByText('Sin resultados')).toBeInTheDocument();
+    expect(screen.getByText('No results')).toBeInTheDocument();
   });
 
-  it('deshabilita todos los botones cuando loading=true', () => {
+  it('disables all buttons when loading=true', () => {
     render(<Pagination {...defaultProps} loading={true} />);
-    expect(screen.getByText('« Inicio')).toBeDisabled();
-    expect(screen.getByText('‹ Anterior')).toBeDisabled();
-    expect(screen.getByText('Siguiente ›')).toBeDisabled();
-    expect(screen.getByText('Fin »')).toBeDisabled();
+    expect(screen.getByText('« First')).toBeDisabled();
+    expect(screen.getByText('‹ Previous')).toBeDisabled();
+    expect(screen.getByText('Next ›')).toBeDisabled();
+    expect(screen.getByText('Last »')).toBeDisabled();
   });
 });

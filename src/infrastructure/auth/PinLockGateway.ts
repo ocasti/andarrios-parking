@@ -1,4 +1,4 @@
-import { PIN_LOCK_KEY, TURNO_DURACION_MS } from '../../domain/constants';
+import { PIN_LOCK_KEY, SHIFT_DURATION_MS } from '../../domain/constants';
 
 export class PinLockGateway {
   isUnlocked(): boolean {
@@ -9,7 +9,7 @@ export class PinLockGateway {
     return !isNaN(until) && Date.now() < until;
   }
 
-  unlock(durationMs: number = TURNO_DURACION_MS): void {
+  unlock(durationMs: number = SHIFT_DURATION_MS): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(PIN_LOCK_KEY, String(Date.now() + durationMs));
     window.dispatchEvent(new Event('pinlock-changed'));

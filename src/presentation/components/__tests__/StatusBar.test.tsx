@@ -8,44 +8,44 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('StatusBar', () => {
-  it("muestra 'En línea' cuando online y sin pendientes", () => {
+  it("shows 'Online' when online and no pending", () => {
     render(<StatusBar status="online" pending={0} />);
-    expect(screen.getByText('En línea')).toBeInTheDocument();
+    expect(screen.getByText('Online')).toBeInTheDocument();
   });
 
-  it("muestra 'Sincronizando (2)' cuando online con 2 pendientes", () => {
+  it("shows 'Syncing (2)' when online with 2 pending", () => {
     render(<StatusBar status="online" pending={2} />);
-    expect(screen.getByText('Sincronizando (2)')).toBeInTheDocument();
+    expect(screen.getByText('Syncing (2)')).toBeInTheDocument();
   });
 
-  it("muestra 'Sin red' cuando offline sin pendientes", () => {
+  it("shows 'No network' when offline and no pending", () => {
     render(<StatusBar status="offline" pending={0} />);
-    expect(screen.getByText('Sin red')).toBeInTheDocument();
+    expect(screen.getByText('No network')).toBeInTheDocument();
   });
 
-  it("muestra 'Sin red — 3 pendientes' cuando offline con 3 pendientes", () => {
+  it("shows 'No network — 3 pending' when offline with 3 pending", () => {
     render(<StatusBar status="offline" pending={3} />);
-    expect(screen.getByText('Sin red — 3 pendientes')).toBeInTheDocument();
+    expect(screen.getByText('No network — 3 pending')).toBeInTheDocument();
   });
 
-  it("muestra 'Sincronizando…' cuando syncing", () => {
+  it("shows 'Syncing…' when syncing", () => {
     render(<StatusBar status="syncing" pending={1} />);
-    expect(screen.getByText('Sincronizando… (1)')).toBeInTheDocument();
+    expect(screen.getByText('Syncing… (1)')).toBeInTheDocument();
   });
 
-  it("aplica clase CSS 'online' cuando status es online", () => {
+  it("applies CSS class 'online' when status is online", () => {
     render(<StatusBar status="online" pending={0} />);
     const bar = screen.getByTestId('status-bar');
     expect(bar).toHaveClass('online');
   });
 
-  it("aplica clase CSS 'offline' cuando status es offline", () => {
+  it("applies CSS class 'offline' when status is offline", () => {
     render(<StatusBar status="offline" pending={0} />);
     const bar = screen.getByTestId('status-bar');
     expect(bar).toHaveClass('offline');
   });
 
-  it("aplica clase CSS 'syncing' cuando status es syncing", () => {
+  it("applies CSS class 'syncing' when status is syncing", () => {
     render(<StatusBar status="syncing" pending={0} />);
     const bar = screen.getByTestId('status-bar');
     expect(bar).toHaveClass('syncing');

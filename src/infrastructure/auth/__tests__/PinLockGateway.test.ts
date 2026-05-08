@@ -26,57 +26,57 @@ describe('PinLockGateway', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('cuando window es undefined (entorno SSR)', () => {
+  describe('when window is undefined (SSR environment)', () => {
     beforeEach(() => {
       vi.stubGlobal('window', undefined);
     });
 
-    it('isUnlocked retorna false', () => {
+    it('isUnlocked returns false', () => {
       expect(gateway.isUnlocked()).toBe(false);
     });
 
-    it('unlock no lanza', () => {
+    it('unlock does not throw', () => {
       expect(() => gateway.unlock()).not.toThrow();
     });
 
-    it('lock no lanza', () => {
+    it('lock does not throw', () => {
       expect(() => gateway.lock()).not.toThrow();
     });
 
-    it('timeLeftMs retorna 0', () => {
+    it('timeLeftMs returns 0', () => {
       expect(gateway.timeLeftMs()).toBe(0);
     });
   });
 
   describe('isUnlocked', () => {
-    it('retorna false inicialmente', () => {
+    it('returns false initially', () => {
       expect(gateway.isUnlocked()).toBe(false);
     });
 
-    it('retorna true después de unlock', () => {
+    it('returns true after unlock', () => {
       gateway.unlock(60_000);
       expect(gateway.isUnlocked()).toBe(true);
     });
 
-    it('retorna false después de lock', () => {
+    it('returns false after lock', () => {
       gateway.unlock(60_000);
       gateway.lock();
       expect(gateway.isUnlocked()).toBe(false);
     });
 
-    it('retorna false si el token expiró', () => {
-      // Establece un timestamp en el pasado (ya expirado)
+    it('returns false if the token has expired', () => {
+      // Sets a timestamp in the past (already expired)
       store[PIN_LOCK_KEY] = String(Date.now() - 1000);
       expect(gateway.isUnlocked()).toBe(false);
     });
   });
 
   describe('timeLeftMs', () => {
-    it('retorna 0 si no está desbloqueado', () => {
+    it('returns 0 if not unlocked', () => {
       expect(gateway.timeLeftMs()).toBe(0);
     });
 
-    it('retorna valor positivo si está desbloqueado', () => {
+    it('returns positive value if unlocked', () => {
       gateway.unlock(60_000);
       expect(gateway.timeLeftMs()).toBeGreaterThan(0);
     });
