@@ -109,13 +109,13 @@ export async function pullAll() {
   try {
     setStatus('syncing');
     await Promise.all([
-      pullTable('residentes', 'residentes'),
-      pullTable('visitantes', 'visitantes'),
-      pullTable('mensualidades', 'mensualidades'),
-      pullTable('pagos_mensualidades', 'pagos'),
-      pullTable('bloqueados', 'bloqueados'),
-      pullTable('placas_aprobadas', 'placas_aprobadas'),
-      pullTable('cierres_caja', 'cierres'),
+      pullTable('residentes', 'residentes', 'updated_at'),
+      pullTable('visitantes', 'visitantes', 'updated_at'),
+      pullTable('mensualidades', 'mensualidades', 'updated_at'),
+      pullTable('pagos_mensualidades', 'pagos', 'fecha'),
+      pullTable('bloqueados', 'bloqueados', 'updated_at'),
+      pullTable('placas_aprobadas', 'placas_aprobadas', 'fecha_aprobacion'),
+      pullTable('cierres_caja', 'cierres', 'fecha'),
       pullTable('actividad', 'actividad', 'ts', 200),
       pullTarifas(),
     ]);

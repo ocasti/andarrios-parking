@@ -1,8 +1,9 @@
 'use client';
 import AppShell from '@/components/AppShell';
+import RequireGuardPin from '@/components/RequireGuardPin';
 import { useLive } from '@/lib/useLive';
 import { db } from '@/lib/db';
-import { cop, fmtT, fmtD, mesKey } from '@/lib/actions';
+import { cop, fmtT, fmtD } from '@/lib/actions';
 
 export default function Dashboard() {
   const residentes = useLive(() => db().residentes.filter((r) => !r.deleted_at).toArray()) ?? [];
@@ -14,17 +15,31 @@ export default function Dashboard() {
   const historial = useLive(() => db().visitantes.filter((v) => !!v.salida && new Date(v.salida!).toDateString() === todayStr).toArray()) ?? [];
   const pagos = useLive(() => db().pagos.filter((p) => new Date(p.fecha).toDateString() === todayStr).toArray()) ?? [];
 
+  const tarifas = useLive(() => db().tarifas.get(1));
   const carros = residentes.filter((r) => r.tipo === 'carro').length;
   const motos = residentes.filter((r) => r.tipo === 'moto').length;
   const visActivos = visitantes.length;
   const recHoy = historial.reduce((s, h) => s + (h.total ?? 0), 0) + pagos.reduce((s, p) => s + p.monto, 0);
+  const capacidad = tarifas?.capacidad_visitantes ?? 0;
+  const lleno = capacidad > 0 && visActivos >= capacidad;
+  const aviso = capacidad > 0 && !lleno && visActivos / capacidad >= 0.8;
 
   return (
-    <AppShell>
+    <AppShell><RequireGuardPin>
       <div className="ph">
         <h2>Dashboard</h2>
         <p>Resumen en tiempo real del parqueadero Andarríos</p>
       </div>
+      {capacidad > 0 && (
+        <div className={`al ${lleno ? 'ae' : aviso ? 'aw' : 'aok'}`} style={{ alignItems: 'center' }}>
+          {lleno ? '🚫' : aviso ? '⚠️' : '🅿️'}
+          <div style={{ flex: 1 }}>
+            <b>{visActivos}/{capacidad}</b> cupos de visitantes ocupados
+            {lleno && ' — Parqueadero lleno. No se pueden registrar más visitantes.'}
+            {aviso && ` — Quedan solo ${capacidad - visActivos} cupos disponibles.`}
+          </div>
+        </div>
+      )}
       <div className="mets">
         <div className="met"><div className="met-ic">🚗</div><div className="met-v">{carros}</div><div className="met-l">Carros residentes</div></div>
         <div className="met"><div className="met-ic">🏍️</div><div className="met-v">{motos}</div><div className="met-l">Motos residentes</div></div>
@@ -45,6 +60,6 @@ export default function Dashboard() {
           ))}</div>
         )}
       </div>
-    </AppShell>
+    </RequireGuardPin></AppShell>
   );
 }

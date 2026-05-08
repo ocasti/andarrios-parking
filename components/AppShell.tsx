@@ -4,18 +4,25 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { initSync, subscribeStatus } from '@/lib/sync';
 import { useAuth, logout } from '@/lib/useAuth';
+import { isUnlocked, lock } from '@/lib/pinLock';
 
-interface NavItem { href: string; label: string; icon: string; admin?: boolean }
-const NAV: NavItem[] = [
+interface NavItem { href: string; label: string; icon: string; }
+// Menú del vigilante (sin login). Operación diaria.
+const NAV_VIGILANTE: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: '📊' },
   { href: '/visitantes', label: 'Visitantes', icon: '🚗' },
   { href: '/caja', label: 'Caja', icon: '💰' },
-  // Admin only
-  { href: '/residentes', label: 'Residentes', icon: '👥', admin: true },
-  { href: '/mensualidades', label: 'Mensualidades', icon: '📅', admin: true },
-  { href: '/control', label: 'Control acceso', icon: '🔒', admin: true },
-  { href: '/tarifas', label: 'Tarifas', icon: '🪙', admin: true },
-  { href: '/reportes', label: 'Reportes', icon: '📑', admin: true },
+];
+// Menú del admin (con login). Visualiza operación pero no edita; gestiona admin/reportes.
+const NAV_ADMIN: NavItem[] = [
+  { href: '/admin', label: 'Panel', icon: '🛠️' },
+  { href: '/visitantes', label: 'Visitantes', icon: '🚗' },
+  { href: '/caja', label: 'Caja', icon: '💰' },
+  { href: '/residentes', label: 'Residentes', icon: '👥' },
+  { href: '/mensualidades', label: 'Mensualidades', icon: '📅' },
+  { href: '/control', label: 'Control', icon: '🔒' },
+  { href: '/tarifas', label: 'Tarifas', icon: '🪙' },
+  { href: '/reportes', label: 'Reportes', icon: '📑' },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -24,6 +31,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'online' | 'offline' | 'syncing'>('online');
   const [pending, setPending] = useState(0);
   const [open, setOpen] = useState(false);
+  const [locked, setLocked] = useState(true);
+
+  useEffect(() => {
+    const upd = () => setLocked(!isUnlocked());
+    upd();
+    window.addEventListener('pinlock-changed', upd);
+    window.addEventListener('storage', upd);
+    return () => {
+      window.removeEventListener('pinlock-changed', upd);
+      window.removeEventListener('storage', upd);
+    };
+  }, []);
 
   useEffect(() => { void initSync(); }, []);
   useEffect(() => {
@@ -32,7 +51,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => { setOpen(false); }, [path]);
 
-  const visible = NAV.filter((n) => !n.admin || isAdmin);
+  const visible = isAdmin ? NAV_ADMIN : NAV_VIGILANTE;
+  const homeHref = isAdmin ? '/admin' : '/';
 
   return (
     <>
@@ -45,7 +65,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             {open ? '✕' : '☰'}
           </button>
-          <Link href="/" className="logo">
+          <Link href={homeHref} className="logo">
             <div className="logo-ic">
               <svg width="24" height="24" viewBox="0 0 64 64">
                 <ellipse cx="30" cy="36" rx="16" ry="9" fill="#fff" opacity="0.92"/>
@@ -79,6 +99,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <span className="tn-ic">🔓</span>
                 <span>Salir</span>
+              </button>
+            )}
+            {!isAdmin && !locked && (
+              <button
+                className="tn tn-logout"
+                onClick={() => { lock(); window.location.reload(); }}
+                title="Bloquea la portería y pide PIN otra vez"
+              >
+                <span className="tn-ic">🔒</span>
+                <span>Cerrar turno</span>
               </button>
             )}
           </nav>

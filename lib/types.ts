@@ -7,6 +7,7 @@ export interface Tarifas {
   vis_hora: number;
   horas_gratis: number;
   iva: number;
+  capacidad_visitantes: number; // 0 = sin límite
   updated_at?: string;
 }
 

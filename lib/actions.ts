@@ -151,7 +151,7 @@ export async function realizarCierre(stats: Omit<CierreCaja, 'id' | 'client_id' 
 // ====== TARIFAS ======
 export async function guardarTarifas(t: Partial<Tarifas>) {
   const stamp = now();
-  const merged: Tarifas = { id: 1, carro_mes: 20000, moto_mes: 10000, vis_hora: 1000, horas_gratis: 2, iva: 19, ...t, updated_at: stamp };
+  const merged: Tarifas = { id: 1, carro_mes: 20000, moto_mes: 10000, vis_hora: 1000, horas_gratis: 2, iva: 19, capacidad_visitantes: 0, ...t, updated_at: stamp };
   await db().tarifas.put(merged);
   await enqueue({ table: 'tarifas', op: 'update', where: { id: 1 }, payload: { ...t, updated_at: stamp } });
   await logActividad('Tarifas actualizadas');

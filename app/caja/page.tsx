@@ -1,10 +1,13 @@
 'use client';
 import AppShell from '@/components/AppShell';
+import RequireGuardPin from '@/components/RequireGuardPin';
 import { useLive } from '@/lib/useLive';
+import { useAuth } from '@/lib/useAuth';
 import { db } from '@/lib/db';
 import { realizarCierre, cop, fmtT, fmtD } from '@/lib/actions';
 
 export default function CajaPage() {
+  const { isAdmin } = useAuth();
   const todayStr = new Date().toDateString();
   const visitantesHoy = useLive(() => db().visitantes.filter((v) => !!v.salida && new Date(v.salida!).toDateString() === todayStr).toArray()) ?? [];
   const pagosHoy = useLive(() => db().pagos.filter((p) => new Date(p.fecha).toDateString() === todayStr).toArray()) ?? [];
@@ -20,8 +23,11 @@ export default function CajaPage() {
   }
 
   return (
-    <AppShell>
-      <div className="ph"><h2>Cierre de caja</h2><p>Corte diario de ingresos del parqueadero</p></div>
+    <AppShell><RequireGuardPin>
+      <div className="ph">
+        <h2>Cierre de caja</h2>
+        <p>{isAdmin ? 'Vista solo lectura — admin' : 'Corte diario de ingresos del parqueadero'}</p>
+      </div>
       <div className="caja-hero">
         <h3 style={{ fontSize: 18, opacity: .85 }}>💰 Total recaudado hoy</h3>
         <div className="caja-monto">{cop(totalVis + totalMens)}</div>
@@ -34,7 +40,7 @@ export default function CajaPage() {
         </div>
       </div>
       <div className="card">
-        <div className="ch"><div className="ctit">🧾 Cobros de hoy</div><button className="btn bp sm" onClick={cerrar}>🏁 Realizar cierre</button></div>
+        <div className="ch"><div className="ctit">🧾 Cobros de hoy</div>{!isAdmin && <button className="btn bp sm" onClick={cerrar}>🏁 Realizar cierre</button>}</div>
         <div className="tw">
           {visitantesHoy.length === 0 && pagosHoy.length === 0 ? (<p className="empty">Sin cobros registrados hoy.</p>) : (
             <table>
@@ -58,6 +64,6 @@ export default function CajaPage() {
           ))
         )}
       </div>
-    </AppShell>
+    </RequireGuardPin></AppShell>
   );
 }
