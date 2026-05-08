@@ -24,6 +24,19 @@ describe('DexieVisitanteRepository', () => {
     });
   });
 
+  describe('obtenerPorId', () => {
+    it('retorna visitante existente por id', async () => {
+      await repo.crear(makeVisitante({ id: 'vObt1', placa: 'OBT001' }));
+      const found = await repo.obtenerPorId('vObt1');
+      expect(found?.id).toBe('vObt1');
+    });
+
+    it('retorna undefined para id inexistente', async () => {
+      const found = await repo.obtenerPorId('no-existe');
+      expect(found).toBeUndefined();
+    });
+  });
+
   describe('listarActivos', () => {
     it('retorna solo sin salida', async () => {
       const activo = makeVisitante({ id: 'v2', placa: 'VIS002', salida: null });

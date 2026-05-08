@@ -26,6 +26,28 @@ describe('PinLockGateway', () => {
     vi.unstubAllGlobals();
   });
 
+  describe('cuando window es undefined (entorno SSR)', () => {
+    beforeEach(() => {
+      vi.stubGlobal('window', undefined);
+    });
+
+    it('isUnlocked retorna false', () => {
+      expect(gateway.isUnlocked()).toBe(false);
+    });
+
+    it('unlock no lanza', () => {
+      expect(() => gateway.unlock()).not.toThrow();
+    });
+
+    it('lock no lanza', () => {
+      expect(() => gateway.lock()).not.toThrow();
+    });
+
+    it('timeLeftMs retorna 0', () => {
+      expect(gateway.timeLeftMs()).toBe(0);
+    });
+  });
+
   describe('isUnlocked', () => {
     it('retorna false inicialmente', () => {
       expect(gateway.isUnlocked()).toBe(false);

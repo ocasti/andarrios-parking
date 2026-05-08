@@ -32,8 +32,8 @@ export default function AptoSelector({ torre, apto, onChange }: Props) {
   return (
     <>
       <div className="fld">
-        <label>Torre</label>
-        <select value={torre} onChange={(e) => onChange(e.target.value, '')}>
+        <label htmlFor="apto-torre">Torre</label>
+        <select id="apto-torre" value={torre} onChange={(e) => onChange(e.target.value, '')}>
           <option value="">Selecciona</option>
           {Array.from({ length: TORRES }, (_, i) => i + 1).map((n) => (
             <option key={n}>{n}</option>
@@ -41,8 +41,9 @@ export default function AptoSelector({ torre, apto, onChange }: Props) {
         </select>
       </div>
       <div className="fld">
-        <label>Apartamento</label>
+        <label htmlFor="apto-sel">Apartamento</label>
         <select
+          id="apto-sel"
           value={apto}
           onChange={(e) => onChange(torre, e.target.value)}
           disabled={!torre}
@@ -56,8 +57,8 @@ export default function AptoSelector({ torre, apto, onChange }: Props) {
         </select>
       </div>
       <div className="fld">
-        <label>Código apto</label>
-        <input type="text" readOnly value={apto || ''} placeholder="T00-000" />
+        <label htmlFor="apto-cod">Código apto</label>
+        <input id="apto-cod" type="text" readOnly value={apto || ''} placeholder="T00-000" />
       </div>
     </>
   );

@@ -54,6 +54,17 @@ describe('DexieMensualidadRepository', () => {
       expect(stored?.fecha_pago).toBe('2024-08-10T00:00:00.000Z');
       expect(stored?.monto).toBe(20000);
     });
+
+    it('actualiza solo updated_at cuando datos no tiene campos opcionales', async () => {
+      const m = makeMensualidad({ id: 'm6', residenteId: 'r6', mesKey: '2024-11', estado: 'pendiente' });
+      await repo.crear(m);
+
+      await repo.actualizar('m6', {});
+
+      const stored = await db.mensualidades.get('m6');
+      expect(stored?.estado).toBe('pendiente');
+      expect(stored?.updated_at).toBeTruthy();
+    });
   });
 
   describe('upsert', () => {

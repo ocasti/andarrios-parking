@@ -58,6 +58,34 @@ describe('useTarifas', () => {
     expect(result.current).toEqual(TARIFA_FALLBACK);
   });
 
+  it('no cambia el estado cuando el row es undefined (next con undefined)', () => {
+    (liveQuery as Mock).mockReturnValue({
+      subscribe: (obs: ObserverLike) => {
+        obs.next?.(undefined);
+        return makeSubscription(obs);
+      },
+    });
+
+    const { result } = renderHook(() => useTarifas());
+
+    expect(result.current).toEqual(TARIFA_FALLBACK);
+  });
+
+  it('llama console.warn cuando el observable emite un error', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    (liveQuery as Mock).mockReturnValue({
+      subscribe: (obs: ObserverLike) => {
+        obs.error?.(new Error('DB error'));
+        return makeSubscription(obs);
+      },
+    });
+
+    renderHook(() => useTarifas());
+
+    expect(warnSpy).toHaveBeenCalledWith('[useTarifas]', expect.any(Error));
+    warnSpy.mockRestore();
+  });
+
   it('retorna la tarifa mapeada cuando existe en DB', async () => {
     // Arrange: tarifa que viene de la DB (ya mapeada, porque tarifaFromRow es identity en el mock)
     const tarifaDB = {

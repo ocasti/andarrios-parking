@@ -57,6 +57,11 @@ describe('DexieResidenteRepository', () => {
       expect(found).toBeDefined();
       expect(found?.placa).toBe('CCC333');
     });
+
+    it('retorna undefined para placa inexistente', async () => {
+      const found = await repo.obtenerPorPlaca('ZZZ999');
+      expect(found).toBeUndefined();
+    });
   });
 
   describe('listarActivos', () => {
