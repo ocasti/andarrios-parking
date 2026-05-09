@@ -109,7 +109,8 @@ export interface ApprovedPlateRow {
 export interface QueueRow {
   id?: number;
   ts: number;
-  op: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  op: Record<string, any>;
   attempts: number;
   lastError?: string;
 }

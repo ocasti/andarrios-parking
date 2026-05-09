@@ -10,11 +10,13 @@ import { getSupabase } from './supabase';
 import { getDB } from '@/src/infrastructure/db/AndarriosDB';
 import type { QueueRow } from '@/src/infrastructure/db/AndarriosDB';
 
-type SyncOp = {
+export type SyncOp = {
   table: string;
   op: 'insert' | 'update' | 'upsert' | 'delete';
-  payload: Record<string, unknown>;
-  where?: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  where?: Record<string, any>;
 };
 
 type Status = 'online' | 'offline' | 'syncing';
@@ -60,7 +62,7 @@ export async function runQueue() {
       const item = await getDB().queue.orderBy('id').first();
       if (!item) break;
       try {
-        await applyOp(sb, item.op);
+        await applyOp(sb, item.op as SyncOp);
         if (item.id !== undefined) await getDB().queue.delete(item.id);
       } catch (err: any) {
         const msg = String(err?.message ?? err);
