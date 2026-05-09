@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import AppShell from '@/src/presentation/components/layout/AppShell';
 import RequireAdmin from '@/src/presentation/components/guards/RequireAdmin';

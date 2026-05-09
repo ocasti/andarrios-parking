@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import AppShell from '@/src/presentation/components/layout/AppShell';
 import RequireGuardPin from '@/src/presentation/components/guards/RequireGuardPin';
 import { useLive } from '@/lib/useLive';
